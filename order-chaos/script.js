@@ -1258,14 +1258,14 @@ class OrderChaosGame {
         
         let statusText = '';
         if (this.gameMode === 'human-vs-human') {
-            statusText = `${this.currentPlayer === 'order' ? 'Order' : 'Chaos'}'s turn - Choose X or O and click on the board`;
+            statusText = `Choose symbol and click`;
         } else {
             const isHumanTurn = (this.playerRole === 'order' && this.currentPlayer === 'order') ||
                                (this.playerRole === 'chaos' && this.currentPlayer === 'chaos');
             if (isHumanTurn) {
-                statusText = 'Your turn - Choose X or O and click on the board';
+                statusText = 'Your turn';
             } else {
-                statusText = 'AI is thinking...';
+                statusText = 'AI thinking...';
             }
         }
         
@@ -1329,7 +1329,34 @@ class OrderChaosGame {
     }
 }
 
+// Function to toggle collapsible sections
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const icon = document.getElementById(sectionId + '-icon');
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        icon.classList.remove('collapsed');
+        icon.textContent = '▼';
+    } else {
+        content.classList.add('collapsed');
+        icon.classList.add('collapsed');
+        icon.textContent = '▶';
+    }
+}
+
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     new OrderChaosGame();
+    
+    // Initialize all sections as collapsed by default
+    const sections = ['rules', 'strategy'];
+    sections.forEach(sectionId => {
+        const content = document.getElementById(sectionId + '-content');
+        const icon = document.getElementById(sectionId + '-icon');
+        
+        content.classList.add('collapsed');
+        icon.classList.add('collapsed');
+        icon.textContent = '▶';
+    });
 });

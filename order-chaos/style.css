@@ -148,18 +148,39 @@ h3 {
     font-size: 1.5em;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
 }
 
 .symbol-btn:hover {
-    border-color: #667eea;
     transform: scale(1.05);
 }
 
-.symbol-btn.active {
-    border-color: #667eea;
-    background: #f0f4ff;
-    color: #667eea;
+.symbol-btn#selectX {
+    color: #e74c3c;
+}
+
+.symbol-btn#selectX:hover {
+    border-color: #e74c3c;
+}
+
+.symbol-btn#selectX.active {
+    border-color: #e74c3c;
+    background: #fdf2f2;
+    color: #e74c3c;
+}
+
+.symbol-btn#selectO {
+    color: #3498db;
+}
+
+.symbol-btn#selectO:hover {
+    border-color: #3498db;
+}
+
+.symbol-btn#selectO.active {
+    border-color: #3498db;
+    background: #f0f8ff;
+    color: #3498db;
 }
 
 .game-status {
@@ -168,6 +189,10 @@ h3 {
     text-align: center;
     width: 100%;
     margin-top: 10px;
+    min-height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-board {
@@ -232,28 +257,80 @@ h3 {
     margin-top: 20px;
 }
 
-.rules {
-    margin-top: 30px;
-    padding: 20px;
+.info-sections {
+    margin-top: 40px;
+}
+
+.collapsible-section {
+    margin-bottom: 25px;
     background: #f8f9fa;
     border-radius: 10px;
     border-left: 5px solid #667eea;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.rules ul {
+.collapsible-section:hover {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.section-header {
+    padding: 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    transition: background-color 0.3s ease;
+    user-select: none;
+}
+
+.section-header:hover {
+    background: #e9ecef;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.toggle-icon {
+    font-size: 1.2em;
+    color: #667eea;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.toggle-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    padding: 0 20px 20px 20px;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.section-content.collapsed {
+    max-height: 0;
+    padding: 0 20px;
+}
+
+.section-content ul {
     list-style-position: inside;
     color: #555;
+    margin: 0;
 }
 
-.rules li {
+.section-content li {
     margin-bottom: 8px;
     line-height: 1.5;
 }
 
 .reference {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #dee2e6;
+    margin: 0;
 }
 
 .reference p {
@@ -274,28 +351,20 @@ h3 {
     text-decoration: underline;
 }
 
-.ai-strategy {
-    margin-top: 20px;
-    padding: 15px;
-    background: #f0f4ff;
-    border-radius: 8px;
-    border: 1px solid #e0e8ff;
-}
-
-.ai-strategy p {
+.section-content p {
     margin-bottom: 12px;
     line-height: 1.6;
-    color: #444;
+    color: #555;
 }
 
-.ai-strategy strong {
+.section-content strong {
     color: #333;
 }
 
 .strategy-sources {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #d0d8ff;
+    border-top: 1px solid #dee2e6;
 }
 
 .strategy-sources p {
@@ -305,22 +374,14 @@ h3 {
 }
 
 .strategy-sources ul {
-    list-style-type: none;
-    padding-left: 0;
+    list-style-position: inside;
+    color: #555;
+    margin: 0;
 }
 
 .strategy-sources li {
-    margin-bottom: 6px;
-    padding-left: 15px;
-    position: relative;
-}
-
-.strategy-sources li:before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: #667eea;
-    font-weight: bold;
+    margin-bottom: 8px;
+    line-height: 1.5;
 }
 
 .strategy-sources a {
@@ -382,6 +443,11 @@ h3 {
     .game-info {
         flex-direction: column;
         text-align: center;
+    }
+    
+    .game-status {
+        font-size: 1em;
+        min-height: 2em;
     }
     
     .game-board {
