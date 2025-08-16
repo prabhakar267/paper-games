@@ -247,6 +247,30 @@ h3 {
     line-height: 1.5;
 }
 
+.reference {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.reference p {
+    color: #666;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+.reference a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.reference a:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
 .game-over {
     position: fixed;
     top: 0;
