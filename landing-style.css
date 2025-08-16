@@ -84,6 +84,9 @@ section a {
     font-weight: bold;
     font-size: 1.1em;
     transition: color 0.2s ease;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 section a:hover {
