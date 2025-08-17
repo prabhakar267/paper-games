@@ -213,6 +213,7 @@ class OrderChaosGame {
         for (let symbol of ['X', 'O']) {
             const criticalBlock = this.findCriticalBlockingMove(symbol);
             if (criticalBlock) {
+                // Use the opposite symbol to block the threat
                 const blockSymbol = symbol === 'X' ? 'O' : 'X';
                 return { ...criticalBlock, symbol: blockSymbol };
             }
@@ -243,7 +244,8 @@ class OrderChaosGame {
                 if (this.board[row][col] === '') {
                     // Try placing the symbol here
                     this.board[row][col] = symbol;
-                    if (this.checkWinCondition() === 'order') {
+                    const winner = this.checkWinCondition();
+                    if (winner === 'order') {
                         this.board[row][col] = ''; // Undo
                         return { row, col };
                     }
@@ -259,9 +261,10 @@ class OrderChaosGame {
         for (let row = 0; row < 6; row++) {
             for (let col = 0; col < 6; col++) {
                 if (this.board[row][col] === '') {
-                    // Check if placing opposite symbol here prevents a win
+                    // Check if placing this symbol here creates a win (which we need to block)
                     this.board[row][col] = symbol;
-                    if (this.checkWinCondition() === 'order') {
+                    const winner = this.checkWinCondition();
+                    if (winner === 'order') {
                         this.board[row][col] = ''; // Undo
                         return { row, col };
                     }
@@ -793,8 +796,13 @@ class OrderChaosGame {
         for (let row = 0; row < 6; row++) {
             for (let col = 0; col < 6; col++) {
                 if (this.board[row][col] === '') {
-                    const urgency = this.evaluateBlockingUrgency(row, col, symbol);
-                    if (urgency > 0) {
+                    // Check if placing this symbol would create a win (threat to block)
+                    this.board[row][col] = symbol;
+                    const winner = this.checkWinCondition();
+                    this.board[row][col] = ''; // Undo immediately
+                    
+                    if (winner === 'order') {
+                        const urgency = this.evaluateBlockingUrgency(row, col, symbol);
                         criticalMoves.push({ row, col, urgency });
                     }
                 }
