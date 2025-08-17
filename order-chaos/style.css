@@ -446,6 +446,7 @@ h3 {
     color: #666;
     margin-bottom: 30px;
     font-size: 1.2em;
+    line-height: 1.4;
 }
 
 @media (max-width: 600px) {

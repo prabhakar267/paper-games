@@ -1299,10 +1299,32 @@ class OrderChaosGame {
         this.gameActive = false;
         
         let message = '';
-        if (winner === 'order') {
-            message = 'Order wins! 5 in a row achieved!';
+        
+        // Check if it's a single-player game
+        if (this.gameMode !== 'human-vs-human') {
+            // Determine if player won or lost
+            const playerWon = (this.playerRole === winner);
+            
+            if (playerWon) {
+                if (winner === 'order') {
+                    message = '🎉 You Win! 🎉<br>5 in a row achieved!';
+                } else {
+                    message = '🎉 You Win! 🎉<br>Successfully prevented 5 in a row!';
+                }
+            } else {
+                if (winner === 'order') {
+                    message = '😔 You Lose! 😔<br>AI achieved 5 in a row!';
+                } else {
+                    message = '😔 You Lose! 😔<br>Failed to get 5 in a row!';
+                }
+            }
         } else {
-            message = 'Chaos wins! Order failed to get 5 in a row!';
+            // Human vs Human game - use generic messages
+            if (winner === 'order') {
+                message = 'Order wins! 5 in a row achieved!';
+            } else {
+                message = 'Chaos wins! Order failed to get 5 in a row!';
+            }
         }
         
         // Show game over modal
