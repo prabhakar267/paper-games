@@ -7,6 +7,7 @@ class OrderChaosGame {
         this.playerRole = 'order';
         this.gameActive = false;
         this.moveCount = 0;
+        this.lastMove = null; // Track the last move for highlighting
         
         this.initializeEventListeners();
     }
@@ -33,6 +34,7 @@ class OrderChaosGame {
         this.selectedSymbol = 'X';
         this.gameActive = true;
         this.moveCount = 0;
+        this.lastMove = null; // Reset last move tracking
         
         // Show game area and hide setup
         document.getElementById('gameSetup').style.display = 'none';
@@ -91,10 +93,22 @@ class OrderChaosGame {
         this.board[row][col] = symbol;
         this.moveCount++;
         
+        // Remove highlight from previous move
+        if (this.lastMove) {
+            const prevCell = document.querySelector(`[data-row="${this.lastMove.row}"][data-col="${this.lastMove.col}"]`);
+            if (prevCell) {
+                prevCell.classList.remove('last-move');
+            }
+        }
+        
         // Update the visual board
         const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         cell.textContent = symbol;
         cell.classList.add('occupied', symbol.toLowerCase());
+        
+        // Highlight the current move as the last move
+        cell.classList.add('last-move');
+        this.lastMove = { row, col };
         
         // Check for win condition
         const winner = this.checkWinCondition();
@@ -1211,7 +1225,7 @@ class OrderChaosGame {
     }
 
     checkWinCondition() {
-        // Check for 5 in a row of either X or O
+        // Check for 5 in a row of the SAME symbol (either all X's or all O's)
         const directions = [
             [0, 1], // horizontal
             [1, 0], // vertical
@@ -1228,7 +1242,7 @@ class OrderChaosGame {
                     let count = 1;
                     const winningCells = [{ row, col }];
                     
-                    // Check in positive direction
+                    // Check in positive direction only (to avoid double counting)
                     for (let i = 1; i < 5; i++) {
                         const newRow = row + dx * i;
                         const newCol = col + dy * i;
@@ -1242,9 +1256,10 @@ class OrderChaosGame {
                         }
                     }
                     
+                    // Only count as a win if we have 5 of the SAME symbol in a row
                     if (count >= 5) {
                         this.highlightWinningCells(winningCells);
-                        return 'order'; // Order wins with 5 in a row
+                        return 'order'; // Order wins with 5 of the same symbol in a row
                     }
                 }
             }
@@ -1313,6 +1328,7 @@ class OrderChaosGame {
         this.selectedSymbol = 'X';
         this.gameActive = true;
         this.moveCount = 0;
+        this.lastMove = null; // Reset last move tracking
         
         this.createBoard();
         this.updateUI();

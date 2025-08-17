@@ -246,6 +246,24 @@ h3 {
     animation: pulse 1s infinite;
 }
 
+.cell.last-move {
+    background: #e8f4fd !important;
+    border: 2px solid #667eea !important;
+    box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+}
+
+.cell.last-move.x {
+    background: #fdf2f2 !important;
+    border: 2px solid #e74c3c !important;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.3);
+}
+
+.cell.last-move.o {
+    background: #f0f8ff !important;
+    border: 2px solid #3498db !important;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+}
+
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
