@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Infinite Tic-Tac-Toe - A strategic infinite grid game where players try to get 5 in a row. Features smart AI opponents with advanced strategies.">
+    <meta name="keywords" content="Infinite Tic-Tac-Toe, strategy game, board game, AI game, 5 in a row, infinite grid game, paper game">
+    <meta name="author" content="Prabhakar Gupta">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta property="og:title" content="Infinite Tic-Tac-Toe - Strategic Infinite Grid Game">
+    <meta property="og:description" content="Play Infinite Tic-Tac-Toe - A strategic infinite grid game where players try to get 5 in a row. Features smart AI opponents.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://prabhakar267.github.io/paper-games/infinite-tic-tac-toe/assets/banner_image_generated.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Infinite Tic-Tac-Toe - Strategic Infinite Grid Game">
+    <meta name="twitter:description" content="Play Infinite Tic-Tac-Toe - A strategic infinite grid game where players try to get 5 in a row.">
+    <meta name="twitter:image" content="https://prabhakar267.github.io/paper-games/infinite-tic-tac-toe/assets/banner_image_generated.png">
+    <title>Infinite Tic-Tac-Toe - Strategic Infinite Grid Game</title>
+    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/order-chaos/assets/colored-pencil.png">
+    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/order-chaos/assets/colored-pencil.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-57220954-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Infinite Tic-Tac-Toe</h1>
+        
+        <div class="game-setup" id="gameSetup">
+            <h2>Game Setup</h2>
+            
+            <div class="setup-section">
+                <h3>Game Mode</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="gameMode" value="human-vs-human" checked>
+                        2 Players
+                    </label>
+                    <label>
+                        <input type="radio" name="gameMode" value="human-vs-ai-random">
+                        1 Player vs AI (Easy)
+                    </label>
+                    <label>
+                        <input type="radio" name="gameMode" value="human-vs-ai-smart">
+                        1 Player vs AI (Hard)
+                    </label>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>You Play As</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="playerSymbol" value="X" checked>
+                        X (Goes First)
+                    </label>
+                    <label>
+                        <input type="radio" name="playerSymbol" value="O">
+                        O (Goes Second)
+                    </label>
+                </div>
+            </div>
+
+            <button id="startGame" class="btn-primary">Start Game</button>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Explore More Games</a>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea" style="display: none;">
+            <div class="game-info">
+                <div class="current-player">
+                    <span id="currentPlayerSymbol">X</span>'s turn
+                </div>
+                <div class="game-status" id="gameStatus">
+                    Click on the board to make your move
+                </div>
+                <div class="move-counter">
+                    Move: <span id="moveCount">0</span>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div class="board-controls">
+                    <button id="zoomIn" class="control-btn">+</button>
+                    <button id="zoomOut" class="control-btn">-</button>
+                    <button id="centerBoard" class="control-btn">⌂</button>
+                </div>
+                <div class="game-board-wrapper" id="gameBoardWrapper">
+                    <div class="game-board" id="gameBoard">
+                        <!-- Infinite grid will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button id="resetGame" class="btn-secondary">New Game</button>
+                <button id="backToSetup" class="btn-secondary">Main Menu</button>
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Explore More Games</a>
+            </div>
+        </div>
+
+        <div class="info-sections">
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('rules')">
+                    <h3>Rules</h3>
+                    <span class="toggle-icon" id="rules-icon">▼</span>
+                </div>
+                <div class="section-content" id="rules-content">
+                    <ul>
+                        <li>Players take turns placing X and O on an infinite grid</li>
+                        <li>The first player to get <strong>5 in a row</strong> (horizontally, vertically, or diagonally) wins</li>
+                        <li>X always goes first</li>
+                        <li>The grid expands automatically as you play</li>
+                        <li>Use zoom controls to navigate the infinite board</li>
+                    </ul>
+                    
+                    <div class="reference">
+                        <p><strong>Game Reference:</strong> <a href="https://en.wikipedia.org/wiki/M,n,k-game" target="_blank" rel="noopener noreferrer">m,n,k-game - Wikipedia</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('strategy')">
+                    <h3>Smart AI Strategy</h3>
+                    <span class="toggle-icon" id="strategy-icon">▼</span>
+                </div>
+                <div class="section-content" id="strategy-content">
+                    <p><strong>AI Strategy:</strong> The smart AI uses advanced position evaluation, threat detection, and strategic positioning. It prioritizes creating multiple threats while blocking opponent winning moves. The AI evaluates positions based on potential for creating 5-in-a-row sequences and uses minimax-style thinking for optimal play.</p>
+                    
+                    <p><strong>Key Tactics:</strong></p>
+                    <ul>
+                        <li>Immediate threat blocking and creation</li>
+                        <li>Strategic center control and expansion</li>
+                        <li>Multiple threat creation (forcing wins)</li>
+                        <li>Advanced position evaluation for long-term advantage</li>
+                    </ul>
+                    
+                    <div class="strategy-sources">
+                        <p><strong>Sources:</strong></p>
+                        <ul>
+                            <li><a href="https://en.wikipedia.org/wiki/M,n,k-game" target="_blank" rel="noopener noreferrer">m,n,k-game - Wikipedia</a></li>
+                            <li><a href="https://en.wikipedia.org/wiki/Gomoku" target="_blank" rel="noopener noreferrer">Gomoku (5-in-a-row) - Wikipedia</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
