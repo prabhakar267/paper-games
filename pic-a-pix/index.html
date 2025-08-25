@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Pic-a-Pix (Nonogram) - A logic puzzle game where you reveal hidden pictures by solving number clues. Features randomly generated puzzles in 15x15 and 20x20 grids.">
+    <meta name="keywords" content="Pic-a-Pix, Nonogram, Picross, logic puzzle, picture puzzle, grid puzzle, number puzzle">
+    <meta name="author" content="Prabhakar Gupta">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta property="og:title" content="Pic-a-Pix (Nonogram) - Logic Picture Puzzle">
+    <meta property="og:description" content="Play Pic-a-Pix (Nonogram) - A logic puzzle game where you reveal hidden pictures by solving number clues. Features randomly generated puzzles.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://prabhakar267.github.io/paper-games/pic-a-pix/assets/banner_image_generated.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pic-a-Pix (Nonogram) - Logic Picture Puzzle">
+    <meta name="twitter:description" content="Play Pic-a-Pix (Nonogram) - A logic puzzle game where you reveal hidden pictures by solving number clues.">
+    <meta name="twitter:image" content="https://prabhakar267.github.io/paper-games/pic-a-pix/assets/banner_image_generated.png">
+    <title>Pic-a-Pix (Nonogram) - Logic Picture Puzzle</title>
+    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/pic-a-pix/assets/colored-pencil.png">
+    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/pic-a-pix/assets/colored-pencil.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-57220954-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Pic-a-Pix</h1>
+        
+        <div class="game-setup" id="gameSetup">
+            <h2>Game Setup</h2>
+            
+            <div class="setup-section">
+                <h3>Grid Size</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="gridSize" value="15" checked>
+                        15×15 Grid (Easier)
+                    </label>
+                    <label>
+                        <input type="radio" name="gridSize" value="20">
+                        20×20 Grid (Harder)
+                    </label>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>Difficulty</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="difficulty" value="easy" checked>
+                        Easy (More filled cells)
+                    </label>
+                    <label>
+                        <input type="radio" name="difficulty" value="medium">
+                        Medium (Balanced)
+                    </label>
+                    <label>
+                        <input type="radio" name="difficulty" value="hard">
+                        Hard (Fewer filled cells)
+                    </label>
+                </div>
+            </div>
+
+            <button id="startGame" class="btn-primary">Generate New Puzzle</button>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Explore More Games</a>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea" style="display: none;">
+            <div class="game-info">
+                <div class="game-status" id="gameStatus">
+                    Left click to fill, right click to mark X
+                </div>
+                <div class="game-controls-top">
+                    <button id="checkSolution" class="btn-secondary">Check Solution</button>
+                    <button id="showSolution" class="btn-secondary">Show Solution</button>
+                </div>
+            </div>
+
+            <div class="puzzle-container">
+                <div class="row-clues" id="rowClues">
+                    <!-- Row clues will be generated by JavaScript -->
+                </div>
+                <div class="col-clues" id="colClues">
+                    <!-- Column clues will be generated by JavaScript -->
+                </div>
+                <div class="game-board" id="gameBoard">
+                    <!-- Grid will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button id="newPuzzle" class="btn-secondary">New Puzzle</button>
+                <button id="backToSetup" class="btn-secondary">Main Menu</button>
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Explore More Games</a>
+            </div>
+        </div>
+
+        <div class="info-sections">
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('rules')">
+                    <h3>How to Play</h3>
+                    <span class="toggle-icon" id="rules-icon">▼</span>
+                </div>
+                <div class="section-content" id="rules-content">
+                    <ul>
+                        <li><strong>Goal:</strong> Fill in cells to reveal a hidden picture based on number clues</li>
+                        <li><strong>Row/Column Numbers:</strong> Show how many consecutive filled cells are in that row/column</li>
+                        <li><strong>Multiple Numbers:</strong> Indicate separate groups of filled cells with at least one empty cell between them</li>
+                        <li><strong>Left Click:</strong> Fill a cell (black)</li>
+                        <li><strong>Right Click:</strong> Mark a cell as definitely empty (X)</li>
+                        <li><strong>Click Again:</strong> Clear a cell back to empty</li>
+                    </ul>
+                    
+                    <div class="example">
+                        <p><strong>Example:</strong> If a row shows "3 1 2", it means there are groups of 3, 1, and 2 consecutive filled cells in that order, with at least one empty cell between each group.</p>
+                    </div>
+                    
+                    <div class="reference">
+                        <p><strong>Game Reference:</strong> <a href="https://en.wikipedia.org/wiki/Nonogram" target="_blank" rel="noopener noreferrer">Nonogram - Wikipedia</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('strategy')">
+                    <h3>Solving Tips</h3>
+                    <span class="toggle-icon" id="strategy-icon">▼</span>
+                </div>
+                <div class="section-content" id="strategy-content">
+                    <p><strong>Start with Large Numbers:</strong> Look for rows/columns with large numbers or many groups - these are often easier to place initially.</p>
+                    
+                    <p><strong>Edge Logic:</strong> If a number is more than half the row/column length, some cells must be filled regardless of position.</p>
+                    
+                    <p><strong>Cross-Reference:</strong> Use completed rows to help solve columns and vice versa. The intersection of constraints often reveals definite cells.</p>
+                    
+                    <p><strong>Mark Empty Cells:</strong> Use right-click to mark cells you know are empty - this helps visualize the remaining possibilities.</p>
+                    
+                    <p><strong>Work Systematically:</strong> Focus on one row or column at a time, but switch when you get stuck to gain new information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
