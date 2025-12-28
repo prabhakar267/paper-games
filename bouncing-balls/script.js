@@ -2,7 +2,6 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const startBtn = document.getElementById('startBtn');
-const resetBtn = document.getElementById('resetBtn');
 
 // Game state
 let balls = [];
@@ -15,6 +14,7 @@ let speedMultiplier = 2.5; // Fast speed
 let centerX = canvas.width / 2;
 let centerY = canvas.height / 2;
 let isFullScreenMode = false;
+let hasSimulationRun = false; // Track if simulation has ever started
 
 // Function to resize canvas based on big ball radius or full screen mode
 function resizeCanvas(radius) {
@@ -378,8 +378,8 @@ function animate() {
         }
     }
 
-    // Check if only one ball remains with 20 lines - stop simulation
-    if (balls.length === 1 && balls[0].lines.length >= 20) {
+    // Check if only one ball remains - last ball standing wins
+    if (balls.length === 1) {
         isRunning = false;
         if (animationId) {
             cancelAnimationFrame(animationId);
@@ -410,6 +410,9 @@ function animate() {
         // Draw the final ball
         balls[0].draw();
         
+        // Draw reset button in the middle of canvas
+        drawResetButton();
+        
         return; // Exit animation loop
     }
 
@@ -438,30 +441,142 @@ function animate() {
     }
 }
 
+// Draw reset button on canvas
+function drawResetButton() {
+    if (isFullScreenMode) {
+        // Fullscreen mode: circular button matching fullscreen controls
+        const buttonRadius = 60; // Larger than 30 for mobile touch
+        const buttonX = centerX;
+        const buttonY = centerY;
+        
+        // Draw circular button with white background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+        
+        ctx.beginPath();
+        ctx.arc(buttonX, buttonY, buttonRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw emoji only
+        ctx.fillStyle = '#333';
+        ctx.font = '48px "Open Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔄', buttonX, buttonY);
+        
+        // Store button bounds for click detection
+        canvas.resetButtonBounds = {
+            x: buttonX - buttonRadius,
+            y: buttonY - buttonRadius,
+            width: buttonRadius * 2,
+            height: buttonRadius * 2,
+            isCircular: true,
+            centerX: buttonX,
+            centerY: buttonY,
+            radius: buttonRadius
+        };
+    } else {
+        // Normal mode: rectangular button with gradient
+        const buttonWidth = 200;
+        const buttonHeight = 60;
+        const buttonX = centerX - buttonWidth / 2;
+        const buttonY = centerY - buttonHeight / 2;
+        
+        // Draw button background with gradient
+        const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        
+        ctx.fillStyle = gradient;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 5;
+        
+        // Draw rounded rectangle
+        const radius = 10;
+        ctx.beginPath();
+        ctx.moveTo(buttonX + radius, buttonY);
+        ctx.lineTo(buttonX + buttonWidth - radius, buttonY);
+        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + radius);
+        ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - radius);
+        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - radius, buttonY + buttonHeight);
+        ctx.lineTo(buttonX + radius, buttonY + buttonHeight);
+        ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - radius);
+        ctx.lineTo(buttonX, buttonY + radius);
+        ctx.quadraticCurveTo(buttonX, buttonY, buttonX + radius, buttonY);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw button text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 24px "Open Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔄 New Game', centerX, centerY);
+        
+        // Store button bounds for click detection
+        canvas.resetButtonBounds = {
+            x: buttonX,
+            y: buttonY,
+            width: buttonWidth,
+            height: buttonHeight,
+            isCircular: false
+        };
+    }
+}
+
 // Update start button text based on simulation state
 function updateStartButton() {
     if (isRunning) {
-        startBtn.textContent = `⏸️ Stop (${balls.length} balls remaining)`;
-        fullscreenStartBtn.textContent = '⏸️';
+        // Simulation is running - show Stop button
+        startBtn.textContent = `⏹️ Stop (${balls.length} balls remaining)`;
+        fullscreenStartBtn.textContent = '⏹️';
         fullscreenStartBtn.title = 'Stop';
         // Disable arena size buttons when running
         mediumArenaBtn.disabled = true;
         fullScreenArenaBtn.disabled = true;
+    } else if (hasSimulationRun) {
+        // Simulation has run before and is now stopped - show Restart button
+        startBtn.textContent = '🔄 Restart';
+        fullscreenStartBtn.textContent = '🔄';
+        fullscreenStartBtn.title = 'Restart';
+        // Enable arena size buttons when stopped
+        mediumArenaBtn.disabled = false;
+        fullScreenArenaBtn.disabled = false;
     } else {
-        startBtn.textContent = '▶️ Start Simulation';
+        // First time - show Play button
+        startBtn.textContent = '▶️ Play';
         fullscreenStartBtn.textContent = '▶️';
-        fullscreenStartBtn.title = 'Start';
+        fullscreenStartBtn.title = 'Play';
         // Enable arena size buttons when stopped
         mediumArenaBtn.disabled = false;
         fullScreenArenaBtn.disabled = false;
     }
 }
 
-// Start/Stop simulation toggle
+// Start/Stop/Restart simulation toggle
 startBtn.addEventListener('click', async () => {
     if (!isRunning) {
+        // Start or Restart simulation
         await initBalls();
         isRunning = true;
+        hasSimulationRun = true;
         updateStartButton();
         animate();
     } else {
@@ -472,30 +587,6 @@ startBtn.addEventListener('click', async () => {
         }
         updateStartButton();
     }
-});
-
-// Reset simulation
-resetBtn.addEventListener('click', () => {
-    isRunning = false;
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-    }
-    balls = [];
-    lines = [];
-    
-    // bigBallRadius is set by arena size buttons, no need to update here
-    resizeCanvas(bigBallRadius);
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw big ball
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = '#667eea';
-    ctx.lineWidth = 5;
-    ctx.stroke();
-    
-    updateStartButton();
 });
 
 // Arena size controls
@@ -576,19 +667,14 @@ window.addEventListener('resize', () => {
 
 // Full screen overlay controls
 const fullscreenStartBtn = document.getElementById('fullscreenStartBtn');
-const fullscreenResetBtn = document.getElementById('fullscreenResetBtn');
 const fullscreenExitBtn = document.getElementById('fullscreenExitBtn');
 
 fullscreenStartBtn.addEventListener('click', () => {
     startBtn.click(); // Trigger the main start button
 });
 
-fullscreenResetBtn.addEventListener('click', () => {
-    resetBtn.click(); // Trigger the main reset button
-});
-
-fullscreenExitBtn.addEventListener('click', () => {
-    // Exit fullscreen mode
+// Exit fullscreen function
+function exitFullscreen() {
     if (document.exitFullscreen) {
         document.exitFullscreen();
     } else if (document.webkitExitFullscreen) {
@@ -598,6 +684,19 @@ fullscreenExitBtn.addEventListener('click', () => {
     } else if (document.msExitFullscreen) {
         document.msExitFullscreen();
     }
+}
+
+// Handle both click and touch events for mobile compatibility
+fullscreenExitBtn.addEventListener('click', exitFullscreen);
+fullscreenExitBtn.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Prevent ghost click
+    exitFullscreen();
+});
+
+// Also handle for start button
+fullscreenStartBtn.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Prevent ghost click
+    startBtn.click();
 });
 
 // Speed controls
@@ -616,10 +715,80 @@ superFastBtn.addEventListener('click', () => {
     superFastBtn.classList.add('active');
 });
 
-// Initial draw
-resetBtn.click();
+// Canvas click handler for restart button
+canvas.addEventListener('click', (event) => {
+    // Only handle clicks when simulation is stopped and button bounds exist
+    if (!isRunning && canvas.resetButtonBounds) {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+        
+        const bounds = canvas.resetButtonBounds;
+        let isClicked = false;
+        
+        if (bounds.isCircular) {
+            // Check circular button collision
+            const dx = clickX - bounds.centerX;
+            const dy = clickY - bounds.centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            isClicked = distance <= bounds.radius;
+        } else {
+            // Check rectangular button collision
+            isClicked = clickX >= bounds.x && clickX <= bounds.x + bounds.width &&
+                       clickY >= bounds.y && clickY <= bounds.y + bounds.height;
+        }
+        
+        if (isClicked) {
+            // Restart button was clicked
+            startBtn.click();
+            canvas.resetButtonBounds = null; // Clear button bounds after click
+        }
+    }
+});
 
-// Auto-start simulation
-setTimeout(() => {
-    startBtn.click();
-}, 1000);
+// Add hover effect for reset button on canvas
+canvas.addEventListener('mousemove', (event) => {
+    if (!isRunning && canvas.resetButtonBounds) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        
+        const bounds = canvas.resetButtonBounds;
+        let isHovering = false;
+        
+        if (bounds.isCircular) {
+            // Check circular button hover
+            const dx = mouseX - bounds.centerX;
+            const dy = mouseY - bounds.centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            isHovering = distance <= bounds.radius;
+        } else {
+            // Check rectangular button hover
+            isHovering = mouseX >= bounds.x && mouseX <= bounds.x + bounds.width &&
+                        mouseY >= bounds.y && mouseY <= bounds.y + bounds.height;
+        }
+        
+        canvas.style.cursor = isHovering ? 'pointer' : 'default';
+    } else {
+        canvas.style.cursor = 'default';
+    }
+});
+
+// Initial draw - set up canvas
+isRunning = false;
+hasSimulationRun = false;
+balls = [];
+lines = [];
+
+resizeCanvas(bigBallRadius);
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+// Draw big ball
+ctx.beginPath();
+ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
+ctx.strokeStyle = '#667eea';
+ctx.lineWidth = 5;
+ctx.stroke();
+
+updateStartButton();
