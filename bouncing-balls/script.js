@@ -3,7 +3,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
-const statusDiv = document.getElementById('status');
 
 // Game state
 let balls = [];
@@ -79,6 +78,14 @@ class Ball {
             const dotProduct = this.vx * normalX + this.vy * normalY;
             this.vx = this.vx - 2 * dotProduct * normalX;
             this.vy = this.vy - 2 * dotProduct * normalY;
+
+            // Increase speed on bounce
+            const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+            const speedIncreaseFactor = 1.03; // 3% speed increase per bounce
+            const newSpeed = currentSpeed * speedIncreaseFactor;
+            const speedRatio = newSpeed / currentSpeed;
+            this.vx *= speedRatio;
+            this.vy *= speedRatio;
 
             // Create line on bounce
             this.createLine();
@@ -308,6 +315,41 @@ function animate() {
         }
     }
 
+    // Check if only one ball remains with 20 lines - stop simulation
+    if (balls.length === 1 && balls[0].lines.length >= 20) {
+        isRunning = false;
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        updateStartButton();
+        // Continue to draw the final state
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw big ball
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#667eea';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        // Draw all lines
+        for (const line of lines) {
+            ctx.beginPath();
+            ctx.moveTo(line.x1, line.y1);
+            ctx.lineTo(line.x2, line.y2);
+            ctx.strokeStyle = line.color;
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.6;
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Draw the final ball
+        balls[0].draw();
+        
+        return; // Exit animation loop
+    }
+
     // Update balls
     for (const ball of balls) {
         ball.update();
@@ -325,28 +367,43 @@ function animate() {
         ball.draw();
     }
 
-    // Update status
-    statusDiv.textContent = `Balls remaining: ${balls.length}`;
-
-    // Check win condition
-    if (balls.length === 1) {
-        statusDiv.innerHTML = `<span class="winner">🎉 Winner! Ball color: ${balls[0].color} 🎉</span>`;
-        isRunning = false;
-        return;
-    }
+    // Update button
+    updateStartButton();
 
     if (isRunning) {
         animationId = requestAnimationFrame(animate);
     }
 }
 
-// Start simulation
+// Update start button text based on simulation state
+function updateStartButton() {
+    if (isRunning) {
+        startBtn.textContent = `⏸️ Stop (${balls.length} balls remaining)`;
+        // Disable arena size buttons when running
+        mediumArenaBtn.disabled = true;
+        bigArenaBtn.disabled = true;
+    } else {
+        startBtn.textContent = '▶️ Start Simulation';
+        // Enable arena size buttons when stopped
+        mediumArenaBtn.disabled = false;
+        bigArenaBtn.disabled = false;
+    }
+}
+
+// Start/Stop simulation toggle
 startBtn.addEventListener('click', () => {
     if (!isRunning) {
         initBalls();
         isRunning = true;
-        statusDiv.textContent = 'Simulation running...';
+        updateStartButton();
         animate();
+    } else {
+        // Stop simulation
+        isRunning = false;
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        updateStartButton();
     }
 });
 
@@ -371,7 +428,7 @@ resetBtn.addEventListener('click', () => {
     ctx.lineWidth = 5;
     ctx.stroke();
     
-    statusDiv.textContent = 'Ready to start';
+    updateStartButton();
 });
 
 // Arena size controls
@@ -379,15 +436,19 @@ const mediumArenaBtn = document.getElementById('mediumArenaBtn');
 const bigArenaBtn = document.getElementById('bigArenaBtn');
 
 mediumArenaBtn.addEventListener('click', () => {
-    bigBallRadius = 250;
-    mediumArenaBtn.classList.add('active');
-    bigArenaBtn.classList.remove('active');
+    if (!isRunning) {
+        bigBallRadius = 250;
+        mediumArenaBtn.classList.add('active');
+        bigArenaBtn.classList.remove('active');
+    }
 });
 
 bigArenaBtn.addEventListener('click', () => {
-    bigBallRadius = 400;
-    mediumArenaBtn.classList.remove('active');
-    bigArenaBtn.classList.add('active');
+    if (!isRunning) {
+        bigBallRadius = 400;
+        mediumArenaBtn.classList.remove('active');
+        bigArenaBtn.classList.add('active');
+    }
 });
 
 // Speed controls

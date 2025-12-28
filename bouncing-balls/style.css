@@ -64,6 +64,10 @@ button:active {
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
 }
 
+.speed-btn:disabled {
+    cursor: not-allowed;
+}
+
 /* Canvas */
 #canvas {
     border: 3px solid #667eea;
