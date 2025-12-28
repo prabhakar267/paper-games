@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Watch colorful balls bounce and compete in a physics simulation. Last ball standing wins! A mesmerizing ball physics game with collision detection.">
+    <meta name="keywords" content="ball physics, simulation game, bouncing balls, physics game, collision detection, paper game">
+    <meta name="author" content="Prabhakar Gupta">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta property="og:title" content="Bouncing Balls - Physics Simulation Game">
+    <meta property="og:description" content="Watch colorful balls bounce and compete in a physics simulation. Last ball standing wins!">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/banner_image_generated.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bouncing Balls - Physics Simulation Game">
+    <meta name="twitter:description" content="Watch colorful balls bounce and compete in a physics simulation. Last ball standing wins!">
+    <meta name="twitter:image" content="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/banner_image_generated.png">
+    <title>Bouncing Balls - Physics Simulation Game</title>
+    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/colored-pencil.png">
+    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/colored-pencil.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-57220954-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ Ball Physics Simulation</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="numBalls">Number of Balls:</label>
+                <input type="number" id="numBalls" min="2" max="50" value="8">
+            </div>
+            
+            <div class="control-group">
+                <label for="bigBallRadius">Big Ball Radius:</label>
+                <input type="number" id="bigBallRadius" min="50" max="300" value="250">
+            </div>
+            
+            <div class="control-group">
+                <label for="smallBallRadius">Small Ball Radius:</label>
+                <input type="number" id="smallBallRadius" min="1" max="20" value="8">
+            </div>
+            
+            <div class="control-group">
+                <label>Speed:</label>
+                <button id="fastBtn" class="speed-btn active">🚀 Fast</button>
+                <button id="superFastBtn" class="speed-btn">⚡ Super Fast</button>
+            </div>
+            
+            <button id="startBtn" class="btn-primary">Start Simulation</button>
+            <button id="resetBtn" class="btn-secondary">Reset</button>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Back to Games</a>
+            </div>
+        </div>
+        
+        <canvas id="canvas" width="600" height="600"></canvas>
+        
+        <div class="status" id="status"></div>
+
+        <div class="info-sections">
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('rules')">
+                    <h3>How It Works</h3>
+                    <span class="toggle-icon" id="rules-icon">▼</span>
+                </div>
+                <div class="section-content" id="rules-content">
+                    <ul>
+                        <li>Balls bounce inside a circular arena with realistic physics</li>
+                        <li>When balls collide or hit walls, they leave colored trails</li>
+                        <li>If another ball crosses a trail, that trail disappears</li>
+                        <li>Balls without any trails left are eliminated</li>
+                        <li>The last ball with remaining trails wins!</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection('physics')">
+                    <h3>Physics Details</h3>
+                    <span class="toggle-icon" id="physics-icon">▼</span>
+                </div>
+                <div class="section-content" id="physics-content">
+                    <p><strong>Collision Detection:</strong> The simulation uses elastic collision physics where momentum is conserved during ball-to-ball collisions. Each collision creates a visible trail.</p>
+                    
+                    <p><strong>Trail System:</strong> Trails are line segments that connect a ball's position at collision points. These trails remain attached to the ball and move with it. When any ball's trajectory crosses another ball's trail, that trail is destroyed.</p>
+                    
+                    <p><strong>Elimination:</strong> A ball is eliminated once all of its trails have been crossed by other balls. This creates an interesting dynamic where balls must protect their trails while trying to cross others'.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
