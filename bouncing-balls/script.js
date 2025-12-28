@@ -328,20 +328,6 @@ superFastBtn.addEventListener('click', () => {
     superFastBtn.classList.add('active');
 });
 
-// Collapsible section toggle
-function toggleSection(sectionId) {
-    const content = document.getElementById(sectionId + '-content');
-    const icon = document.getElementById(sectionId + '-icon');
-    
-    if (content.classList.contains('active')) {
-        content.classList.remove('active');
-        icon.classList.remove('rotated');
-    } else {
-        content.classList.add('active');
-        icon.classList.add('rotated');
-    }
-}
-
 // Initial draw
 resetBtn.click();
 

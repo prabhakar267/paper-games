@@ -1,36 +1,6 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Bouncing Balls Specific Styles */
 
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
-}
-
-.container {
-    background: white;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    max-width: 700px;
-    width: 100%;
-}
-
-h1 {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 28px;
-    text-align: center;
-}
-
+/* Controls Section */
 .controls {
     margin-bottom: 20px;
     text-align: center;
@@ -72,28 +42,6 @@ button {
     font-weight: 600;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-.btn-secondary {
-    background: #f0f0f0;
-    color: #333;
-    border: 2px solid #ddd;
-}
-
-.btn-secondary:hover {
-    background: #e0e0e0;
-    border-color: #bbb;
-}
-
 button:active {
     transform: translateY(0);
 }
@@ -116,6 +64,7 @@ button:active {
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
 }
 
+/* Canvas */
 #canvas {
     border: 3px solid #667eea;
     border-radius: 10px;
@@ -125,6 +74,7 @@ button:active {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Status */
 .status {
     text-align: center;
     margin-top: 15px;
@@ -140,93 +90,8 @@ button:active {
     animation: pulse 1s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* Info sections */
-.info-sections {
-    margin-top: 30px;
-}
-
-.collapsible-section {
-    margin-bottom: 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.section-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px 20px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    transition: background 0.3s ease;
-}
-
-.section-header:hover {
-    opacity: 0.9;
-}
-
-.section-header h3 {
-    margin: 0;
-    font-size: 18px;
-}
-
-.toggle-icon {
-    font-size: 16px;
-    transition: transform 0.3s ease;
-}
-
-.toggle-icon.rotated {
-    transform: rotate(-180deg);
-}
-
-.section-content {
-    padding: 20px;
-    background: #f8f9fa;
-    display: none;
-}
-
-.section-content.active {
-    display: block;
-}
-
-.section-content ul {
-    list-style-position: inside;
-    color: #555;
-    line-height: 1.8;
-}
-
-.section-content li {
-    margin-bottom: 8px;
-}
-
-.section-content p {
-    color: #555;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
-
-.section-content strong {
-    color: #333;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
-    .container {
-        padding: 20px;
-    }
-
-    h1 {
-        font-size: 24px;
-    }
-
     #canvas {
         max-width: 100%;
         height: auto;
@@ -252,18 +117,6 @@ button:active {
 }
 
 @media (max-width: 480px) {
-    body {
-        padding: 10px;
-    }
-
-    .container {
-        padding: 15px;
-    }
-
-    h1 {
-        font-size: 20px;
-    }
-
     .speed-btn {
         display: block;
         width: 100%;
