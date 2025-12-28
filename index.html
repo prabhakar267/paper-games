@@ -3,10 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paper Games Collection</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Collection of strategic board games, brain-teasing puzzles, and mesmerizing simulations. Play Order vs Chaos, Infinite Tic-Tac-Toe, Pic-a-Pix nonograms, and more.">
+    <meta name="keywords" content="paper games, strategy games, board games, puzzles, nonograms, tic-tac-toe, logic games, brain teasers">
+    <meta name="author" content="Prabhakar Gupta">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Paper Games Collection - Strategic Games & Puzzles">
+    <meta property="og:description" content="Collection of strategic board games, brain-teasing puzzles, and mesmerizing simulations. Play Order vs Chaos, Infinite Tic-Tac-Toe, Pic-a-Pix, and more.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://prabhakar267.github.io/paper-games/order-chaos/assets/banner_image_generated.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Paper Games Collection - Strategic Games & Puzzles">
+    <meta name="twitter:description" content="Collection of strategic board games, brain-teasing puzzles, and mesmerizing simulations. Play now!">
+    <meta name="twitter:image" content="https://prabhakar267.github.io/paper-games/order-chaos/assets/banner_image_generated.png">
+    
+    <title>Paper Games Collection - Strategic Games & Puzzles</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
+    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="landing-style.css">
     
     <!-- Google Analytics -->
@@ -24,49 +57,65 @@
     <div class="container">
         <header>
             <h1>Paper Games Collection</h1>
-            <p class="subtitle">Classic strategy games reimagined for the digital age</p>
+            <p class="subtitle">Strategic board games, brain-teasing puzzles, and mesmerizing simulations</p>
         </header>
 
         <main>
-            <section class="games-list">
-                <h2>Available Games</h2>
-                <ul>
-                    <li>
-                        <a href="order-chaos/">
-                            Order vs Chaos
-                            <span class="description">Strategic 6×6 grid game with AI opponents</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="infinite-tic-tac-toe/">
-                            Infinite Tic-Tac-Toe
-                            <span class="description">Get 5 in a row on an infinite grid with smart AI</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="pic-a-pix/">
-                            Pic-a-Pix
-                            <span class="description">Logic puzzle game - reveal hidden pictures using number clues</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="bouncing-balls/">
-                            Bouncing Balls
-                            <span class="description">Watch colorful balls bounce and compete in a physics simulation</span>
-                        </a>
-                    </li>
-                </ul>
-            </section>
-
-            <section class="links">
-                <h2>Links</h2>
-                <ul>
-                    <li>
-                        <a href="https://github.com/prabhakar267/paper-games" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
-                    </li>
-                </ul>
+            <section class="games-grid">
+                <div class="game-tile" style="background-image: url('order-chaos/assets/banner_image_generated.png');">
+                    <a href="order-chaos/">
+                        <div class="tile-overlay">
+                            <h3>Order vs Chaos</h3>
+                            <p>A strategic duel where one player seeks order and the other thrives on chaos</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="game-tile" style="background-image: url('infinite-tic-tac-toe/assets/banner_image_generated.png');">
+                    <a href="infinite-tic-tac-toe/">
+                        <div class="tile-overlay">
+                            <h3>Infinite Tic-Tac-Toe</h3>
+                            <p>Classic tic-tac-toe evolved - battle on an endless grid with challenging AI</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="game-tile" style="background-image: url('pic-a-pix/assets/banner_image_generated.png');">
+                    <a href="pic-a-pix/">
+                        <div class="tile-overlay">
+                            <h3>Pic-a-Pix</h3>
+                            <p>Nonogram puzzles that challenge your logic - decode number clues to reveal hidden images</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="game-tile" style="background-image: url('bouncing-balls/assets/banner_image_generated.png');">
+                    <a href="bouncing-balls/">
+                        <div class="tile-overlay">
+                            <h3>Bouncing Balls</h3>
+                            <p>Mesmerizing physics simulation where colorful balls compete through gravity and collisions</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="game-tile explorer-tile" style="background-image: url('https://www.prabhakargupta.com/explorer/assets/molumen-world-map-1.png');">
+                    <a href="https://www.prabhakargupta.com/explorer/" target="_blank" rel="noopener noreferrer">
+                        <div class="tile-overlay">
+                            <h3>UNESCO Heritage Explorer <i class="fas fa-external-link-alt"></i></h3>
+                            <p>Discover and track your visits to UNESCO World Heritage Sites worldwide</p>
+                        </div>
+                    </a>
+                </div>
             </section>
         </main>
     </div>
+    
+    <footer>
+        <p>
+            <a href="https://www.prabhakargupta.com/" target="_blank" rel="noopener noreferrer"><i class="fas fa-home"></i> Prabhakar Gupta</a>
+            <span class="separator">•</span>
+            <a href="https://github.com/prabhakar267/paper-games" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a>
+        </p>
+    </footer>
 </body>
 </html>
