@@ -16,6 +16,38 @@ let centerY = canvas.height / 2;
 let isFullScreenMode = false;
 let hasSimulationRun = false; // Track if simulation has ever started
 
+// Ball emoji collection with their representative colors
+const ballEmojis = [
+    { emoji: '⚽', color: '#000000' }, // Soccer ball - Black
+    { emoji: '🏀', color: '#FF6B35' }, // Basketball - Orange
+    { emoji: '🏈', color: '#8B4513' }, // Football - Brown
+    { emoji: '⚾', color: '#FFFFFF' }, // Baseball - White
+    { emoji: '🎾', color: '#CCFF00' }, // Tennis ball - Yellow-green
+    { emoji: '🏐', color: '#FFFFFF' }, // Volleyball - White
+    { emoji: '🏉', color: '#8B4513' }, // Rugby ball - Brown
+    { emoji: '🥎', color: '#FFEB3B' }, // Softball - Yellow
+    { emoji: '🎱', color: '#000000' }, // Pool 8 ball - Black
+    { emoji: '🔴', color: '#FF0000' }, // Red circle - Red
+    { emoji: '🟠', color: '#FF9500' }, // Orange circle - Orange
+    { emoji: '🟡', color: '#FFEB3B' }, // Yellow circle - Yellow
+    { emoji: '🟢', color: '#34C759' }, // Green circle - Green
+    { emoji: '🔵', color: '#007AFF' }, // Blue circle - Blue
+    { emoji: '🟣', color: '#AF52DE' }, // Purple circle - Purple
+    { emoji: '🟤', color: '#A2845E' }, // Brown circle - Brown
+    { emoji: '⚪', color: '#FFFFFF' }, // White circle - White
+    { emoji: '⚫', color: '#000000' }, // Black circle - Black
+    { emoji: '🌕', color: '#F4E8C1' }, // Full moon - Cream/light yellow
+    { emoji: '🌍', color: '#4A90E2' }, // Earth - Blue
+    { emoji: '🌎', color: '#5AC8FA' }, // Earth Americas - Light blue
+    { emoji: '🌏', color: '#30B0C7' }, // Earth Asia-Australia - Cyan blue
+    { emoji: '🪀', color: '#FF3B30' }  // Yo-yo - Red
+];
+
+// Get random ball emoji with its color
+function randomBallEmoji() {
+    return ballEmojis[Math.floor(Math.random() * ballEmojis.length)];
+}
+
 // Function to resize canvas based on big ball radius or full screen mode
 function resizeCanvas(radius) {
     if (isFullScreenMode) {
@@ -53,30 +85,6 @@ function resizeCanvas(radius) {
     }
 }
 
-// Generate random color from a curated palette
-function randomColor() {
-    if (isFullScreenMode) {
-        // Vibrant neon-style colors for fullscreen mode
-        const colors = [
-            '#00f5ff', // Cyan
-            '#ff006e', // Hot pink
-            '#ffbe0b', // Yellow
-            '#8338ec', // Purple
-            '#3a86ff', // Blue
-            '#fb5607', // Orange
-            '#06ffa5', // Mint green
-            '#ff006e', // Magenta
-            '#00bbf9', // Sky blue
-            '#f72585'  // Pink
-        ];
-        return colors[Math.floor(Math.random() * colors.length)];
-    } else {
-        // Original random colors for normal mode
-        const hue = Math.random() * 360;
-        return `hsl(${hue}, 70%, 50%)`;
-    }
-}
-
 // Check if a point is inside the big ball
 function isInsideBigBall(x, y, radius) {
     const dx = x - centerX;
@@ -86,23 +94,34 @@ function isInsideBigBall(x, y, radius) {
 
 // Ball class
 class Ball {
-    constructor(x, y, vx, vy, radius, color) {
+    constructor(x, y, vx, vy, radius, color, emoji) {
         this.x = x;
         this.y = y;
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
         this.color = color;
+        this.emoji = emoji;
         this.lines = [];
         this.hasHadLines = false;
         this.prevX = x;
         this.prevY = y;
+        this.trail = []; // Array to store trail positions
+        this.maxTrailLength = 15; // Number of trail segments
     }
 
     update() {
         // Store previous position for accurate trajectory tracking
         this.prevX = this.x;
         this.prevY = this.y;
+        
+        // Add current position to trail
+        this.trail.push({ x: this.x, y: this.y });
+        
+        // Keep trail at max length
+        if (this.trail.length > this.maxTrailLength) {
+            this.trail.shift();
+        }
         
         this.x += this.vx;
         this.y += this.vy;
@@ -159,14 +178,74 @@ class Ball {
         this.hasHadLines = true;
     }
 
+    drawTrail() {
+        if (this.trail.length < 2) return;
+        
+        // Draw trail segments with fading opacity
+        for (let i = 0; i < this.trail.length - 1; i++) {
+            const segment = this.trail[i];
+            const nextSegment = this.trail[i + 1];
+            
+            // Calculate opacity based on position in trail (older = more transparent)
+            const opacity = (i / this.trail.length) * 0.6;
+            
+            // Calculate trail thickness (gets thinner towards the back)
+            const thickness = this.radius * 2 * (0.3 + (i / this.trail.length) * 0.7);
+            
+            // Parse the color to get RGB values
+            let r, g, b;
+            if (this.color.startsWith('#')) {
+                // Hex color
+                const hex = this.color.substring(1);
+                r = parseInt(hex.substring(0, 2), 16);
+                g = parseInt(hex.substring(2, 4), 16);
+                b = parseInt(hex.substring(4, 6), 16);
+            } else if (this.color.startsWith('hsl')) {
+                // For HSL, we'll use a simpler approach - just use the color with opacity
+                ctx.strokeStyle = this.color.replace(')', `, ${opacity})`).replace('hsl', 'hsla');
+                ctx.lineWidth = thickness;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(segment.x, segment.y);
+                ctx.lineTo(nextSegment.x, nextSegment.y);
+                ctx.stroke();
+                continue;
+            }
+            
+            // Draw trail segment
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            ctx.lineWidth = thickness;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(segment.x, segment.y);
+            ctx.lineTo(nextSegment.x, nextSegment.y);
+            ctx.stroke();
+        }
+    }
+
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Draw emoji instead of circle
+        ctx.font = `${this.radius * 2.8}px "Open Sans", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Add a subtle shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
+        ctx.fillText(this.emoji, this.x, this.y);
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
     }
 }
 
@@ -182,13 +261,18 @@ function checkBallCollision(ball1, ball2) {
         const sin = Math.sin(angle);
         const cos = Math.cos(angle);
 
+        // Calculate current speeds
+        const speed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
+        const speed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
+        const maxSpeed = Math.max(speed1, speed2);
+
         // Rotate velocities
         const vx1 = ball1.vx * cos + ball1.vy * sin;
         const vy1 = ball1.vy * cos - ball1.vx * sin;
         const vx2 = ball2.vx * cos + ball2.vy * sin;
         const vy2 = ball2.vy * cos - ball2.vx * sin;
 
-        // Collision reaction (elastic collision)
+        // Collision reaction (swap velocities along collision axis)
         const vx1Final = vx2;
         const vx2Final = vx1;
 
@@ -197,6 +281,19 @@ function checkBallCollision(ball1, ball2) {
         ball1.vy = vy1 * cos + vx1Final * sin;
         ball2.vx = vx2Final * cos - vy2 * sin;
         ball2.vy = vy2 * cos + vx2Final * sin;
+
+        // Scale both velocities to maximum speed
+        const newSpeed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
+        const newSpeed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
+        
+        if (newSpeed1 > 0) {
+            ball1.vx = (ball1.vx / newSpeed1) * maxSpeed;
+            ball1.vy = (ball1.vy / newSpeed1) * maxSpeed;
+        }
+        if (newSpeed2 > 0) {
+            ball2.vx = (ball2.vx / newSpeed2) * maxSpeed;
+            ball2.vy = (ball2.vy / newSpeed2) * maxSpeed;
+        }
 
         // Separate balls
         const overlap = ball1.radius + ball2.radius - distance;
@@ -209,21 +306,11 @@ function checkBallCollision(ball1, ball2) {
     }
 }
 
-// Check if two line segments intersect
-function lineSegmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
-    const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-    if (denom === 0) return false;
-
-    const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-    const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-
-    return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
-}
-
 // Check if ball crosses a line (using circle-line segment distance)
 function checkLineCrossing(ball, line) {
-    // Don't check the ball's own line
-    if (ball === line.ball) return false;
+    // Allow balls without lines to remove any line (including their own if they had any)
+    // Otherwise, don't check the ball's own line
+    if (ball.lines.length > 0 && ball === line.ball) return false;
     
     // Calculate distance from ball center to line segment
     const dx = line.x2 - line.x1;
@@ -294,13 +381,15 @@ async function initBalls() {
             attempts++;
         } while (!isInsideBigBall(x, y, smallBallRadius) && attempts < 100);
 
-        const speed = (0.8 + Math.random() * 0.7) * speedMultiplier;
+        const speed = (1.1 + Math.random() * 0.4) * speedMultiplier;
         const angle = Math.random() * Math.PI * 2;
         const vx = speed * Math.cos(angle);
         const vy = speed * Math.sin(angle);
-        const color = randomColor();
+        const ballData = randomBallEmoji();
+        const emoji = ballData.emoji;
+        const color = ballData.color;
 
-        balls.push(new Ball(x, y, vx, vy, smallBallRadius, color));
+        balls.push(new Ball(x, y, vx, vy, smallBallRadius, color, emoji));
     }
 }
 
@@ -407,7 +496,8 @@ function animate() {
             ctx.globalAlpha = 1.0;
         }
         
-        // Draw the final ball
+        // Draw the final ball with trail
+        balls[0].drawTrail();
         balls[0].draw();
         
         // Draw reset button in the middle of canvas
@@ -428,8 +518,9 @@ function animate() {
         }
     }
 
-    // Draw balls
+    // Draw balls with trails
     for (const ball of balls) {
+        ball.drawTrail();
         ball.draw();
     }
 
