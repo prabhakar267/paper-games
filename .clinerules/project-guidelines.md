@@ -71,8 +71,8 @@ Create `[project-name]/index.html` with this structure:
     <title>[Game Name] - [Tagline]</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/[project-name]/assets/colored-pencil.png">
-    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/[project-name]/assets/colored-pencil.png">
+    <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
+    <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
     
     <!-- Google Fonts - Always use Open Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -238,7 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
    - Format: PNG
    - Purpose: Social media sharing (Open Graph)
 
-2. **Favicon** (OPTIONAL): Can copy from `common/assets/colored-pencil.png` or create custom
+2. **Favicon**: Always use the shared favicon from `common/assets/colored-pencil.png`
+   - DO NOT copy colored-pencil.png to individual project directories
+   - Reference it from common directory in HTML: `https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png`
+   - Projects can create custom favicons if needed, but the default colored-pencil.png should remain only in common/assets/
 
 ### Step 6: Update Landing Page
 
