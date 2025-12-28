@@ -78,6 +78,83 @@ button:active {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Full Screen Mode Styles */
+#canvas.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+}
+
+body.fullscreen-active {
+    overflow: hidden;
+}
+
+body.fullscreen-active .container {
+    overflow: visible;
+}
+
+/* Full Screen Overlay Controls */
+.fullscreen-controls {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    gap: 15px;
+}
+
+body.fullscreen-active .fullscreen-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen-control-btn {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.fullscreen-control-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.fullscreen-control-btn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .fullscreen-controls {
+        top: 10px;
+        right: 10px;
+        gap: 10px;
+    }
+    
+    .fullscreen-control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+}
+
 /* Status */
 .status {
     text-align: center;

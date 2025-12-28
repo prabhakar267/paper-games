@@ -14,21 +14,67 @@ let smallBallRadius = 7;
 let speedMultiplier = 2.5; // Fast speed
 let centerX = canvas.width / 2;
 let centerY = canvas.height / 2;
+let isFullScreenMode = false;
 
-// Function to resize canvas based on big ball radius
+// Function to resize canvas based on big ball radius or full screen mode
 function resizeCanvas(radius) {
-    const padding = 20; // Padding around the circle
-    const size = Math.max(600, (radius * 2) + padding * 2);
-    canvas.width = size;
-    canvas.height = size;
-    centerX = canvas.width / 2;
-    centerY = canvas.height / 2;
+    if (isFullScreenMode) {
+        // Full screen mode: use entire viewport
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Calculate 5% padding from all edges
+        const paddingX = canvas.width * 0.05;
+        const paddingY = canvas.height * 0.05;
+        
+        // Calculate the largest circle that fits in the viewport with 5% margins
+        const availableWidth = canvas.width - paddingX * 2;
+        const availableHeight = canvas.height - paddingY * 2;
+        bigBallRadius = Math.min(availableWidth, availableHeight) / 2;
+        
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+        
+        // Apply full screen styling
+        canvas.classList.add('fullscreen');
+        document.body.classList.add('fullscreen-active');
+    } else {
+        // Normal mode
+        const padding = 20;
+        const size = Math.max(600, (radius * 2) + padding * 2);
+        canvas.width = size;
+        canvas.height = size;
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+        
+        // Remove full screen styling
+        canvas.classList.remove('fullscreen');
+        document.body.classList.remove('fullscreen-active');
+    }
 }
 
-// Generate random color
+// Generate random color from a curated palette
 function randomColor() {
-    const hue = Math.random() * 360;
-    return `hsl(${hue}, 70%, 50%)`;
+    if (isFullScreenMode) {
+        // Vibrant neon-style colors for fullscreen mode
+        const colors = [
+            '#00f5ff', // Cyan
+            '#ff006e', // Hot pink
+            '#ffbe0b', // Yellow
+            '#8338ec', // Purple
+            '#3a86ff', // Blue
+            '#fb5607', // Orange
+            '#06ffa5', // Mint green
+            '#ff006e', // Magenta
+            '#00bbf9', // Sky blue
+            '#f72585'  // Pink
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    } else {
+        // Original random colors for normal mode
+        const hue = Math.random() * 360;
+        return `hsl(${hue}, 70%, 50%)`;
+    }
 }
 
 // Check if a point is inside the big ball
@@ -207,13 +253,30 @@ function checkLineCrossing(ball, line) {
 }
 
 // Initialize balls
-function initBalls() {
+async function initBalls() {
     balls = [];
     lines = [];
     const numBalls = parseInt(document.getElementById('numBalls').value);
     
     // Keep ball size consistent at 7px for all arena sizes
     smallBallRadius = 7;
+    
+    // Enter fullscreen if Full Screen mode is selected
+    if (isFullScreenMode) {
+        try {
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                await document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                await document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                await document.documentElement.msRequestFullscreen();
+            }
+        } catch (err) {
+            console.error('Error attempting to enable full screen:', err);
+        }
+    }
     
     // Resize canvas to fit the big ball
     resizeCanvas(bigBallRadius);
@@ -248,7 +311,7 @@ function animate() {
     // Draw big ball
     ctx.beginPath();
     ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = '#667eea';
+    ctx.strokeStyle = isFullScreenMode ? '#00f5ff' : '#667eea';
     ctx.lineWidth = 5;
     ctx.stroke();
 
@@ -328,7 +391,7 @@ function animate() {
         // Draw big ball
         ctx.beginPath();
         ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = '#667eea';
+        ctx.strokeStyle = isFullScreenMode ? '#00f5ff' : '#667eea';
         ctx.lineWidth = 5;
         ctx.stroke();
         
@@ -379,21 +442,25 @@ function animate() {
 function updateStartButton() {
     if (isRunning) {
         startBtn.textContent = `⏸️ Stop (${balls.length} balls remaining)`;
+        fullscreenStartBtn.textContent = '⏸️';
+        fullscreenStartBtn.title = 'Stop';
         // Disable arena size buttons when running
         mediumArenaBtn.disabled = true;
-        bigArenaBtn.disabled = true;
+        fullScreenArenaBtn.disabled = true;
     } else {
         startBtn.textContent = '▶️ Start Simulation';
+        fullscreenStartBtn.textContent = '▶️';
+        fullscreenStartBtn.title = 'Start';
         // Enable arena size buttons when stopped
         mediumArenaBtn.disabled = false;
-        bigArenaBtn.disabled = false;
+        fullScreenArenaBtn.disabled = false;
     }
 }
 
 // Start/Stop simulation toggle
-startBtn.addEventListener('click', () => {
+startBtn.addEventListener('click', async () => {
     if (!isRunning) {
-        initBalls();
+        await initBalls();
         isRunning = true;
         updateStartButton();
         animate();
@@ -433,21 +500,103 @@ resetBtn.addEventListener('click', () => {
 
 // Arena size controls
 const mediumArenaBtn = document.getElementById('mediumArenaBtn');
-const bigArenaBtn = document.getElementById('bigArenaBtn');
+const fullScreenArenaBtn = document.getElementById('fullScreenArenaBtn');
 
 mediumArenaBtn.addEventListener('click', () => {
     if (!isRunning) {
+        isFullScreenMode = false;
         bigBallRadius = 250;
         mediumArenaBtn.classList.add('active');
-        bigArenaBtn.classList.remove('active');
+        fullScreenArenaBtn.classList.remove('active');
+        resizeCanvas(bigBallRadius);
+        
+        // Redraw the arena
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#667eea';
+        ctx.lineWidth = 5;
+        ctx.stroke();
     }
 });
 
-bigArenaBtn.addEventListener('click', () => {
+fullScreenArenaBtn.addEventListener('click', () => {
     if (!isRunning) {
-        bigBallRadius = 400;
+        isFullScreenMode = true;
         mediumArenaBtn.classList.remove('active');
-        bigArenaBtn.classList.add('active');
+        fullScreenArenaBtn.classList.add('active');
+    }
+});
+
+// Handle fullscreen change events
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    const isCurrentlyFullscreen = document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement;
+    
+    if (!isCurrentlyFullscreen && isFullScreenMode) {
+        // User exited fullscreen (e.g., pressed ESC) - reset to medium
+        if (!isRunning) {
+            isFullScreenMode = false;
+            bigBallRadius = 250;
+            mediumArenaBtn.classList.add('active');
+            fullScreenArenaBtn.classList.remove('active');
+            resizeCanvas(bigBallRadius);
+            
+            // Redraw the arena
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+        }
+    }
+}
+
+// Handle window resize in full screen mode
+window.addEventListener('resize', () => {
+    if (isFullScreenMode && !isRunning) {
+        resizeCanvas(0);
+        // Redraw the arena
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#667eea';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+    }
+});
+
+// Full screen overlay controls
+const fullscreenStartBtn = document.getElementById('fullscreenStartBtn');
+const fullscreenResetBtn = document.getElementById('fullscreenResetBtn');
+const fullscreenExitBtn = document.getElementById('fullscreenExitBtn');
+
+fullscreenStartBtn.addEventListener('click', () => {
+    startBtn.click(); // Trigger the main start button
+});
+
+fullscreenResetBtn.addEventListener('click', () => {
+    resetBtn.click(); // Trigger the main reset button
+});
+
+fullscreenExitBtn.addEventListener('click', () => {
+    // Exit fullscreen mode
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
     }
 });
 
