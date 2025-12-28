@@ -11,10 +11,20 @@ let lines = [];
 let animationId = null;
 let isRunning = false;
 let bigBallRadius = 250;
-let smallBallRadius = 8;
+let smallBallRadius = 7;
 let speedMultiplier = 2.5; // Fast speed
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
+let centerX = canvas.width / 2;
+let centerY = canvas.height / 2;
+
+// Function to resize canvas based on big ball radius
+function resizeCanvas(radius) {
+    const padding = 20; // Padding around the circle
+    const size = Math.max(600, (radius * 2) + padding * 2);
+    canvas.width = size;
+    canvas.height = size;
+    centerX = canvas.width / 2;
+    centerY = canvas.height / 2;
+}
 
 // Generate random color
 function randomColor() {
@@ -40,9 +50,15 @@ class Ball {
         this.color = color;
         this.lines = [];
         this.hasHadLines = false;
+        this.prevX = x;
+        this.prevY = y;
     }
 
     update() {
+        // Store previous position for accurate trajectory tracking
+        this.prevX = this.x;
+        this.prevY = this.y;
+        
         this.x += this.vx;
         this.y += this.vy;
 
@@ -70,9 +86,16 @@ class Ball {
     }
 
     createLine() {
+        // Calculate the point on the wall where the ball touches
+        const dx = this.x - centerX;
+        const dy = this.y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const wallX = centerX + (bigBallRadius * dx) / distance;
+        const wallY = centerY + (bigBallRadius * dy) / distance;
+        
         const line = {
-            x1: this.x,
-            y1: this.y,
+            x1: wallX,
+            y1: wallY,
             x2: this.x,
             y2: this.y,
             color: this.color,
@@ -130,10 +153,6 @@ function checkBallCollision(ball1, ball2) {
         ball1.y -= separateY;
         ball2.x += separateX;
         ball2.y += separateY;
-
-        // Create lines on collision
-        ball1.createLine();
-        ball2.createLine();
     }
 }
 
@@ -148,17 +167,36 @@ function lineSegmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
     return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
 }
 
-// Check if ball trajectory crosses a line
+// Check if ball crosses a line (using circle-line segment distance)
 function checkLineCrossing(ball, line) {
-    // Get ball's previous position (approximate)
-    const prevX = ball.x - ball.vx;
-    const prevY = ball.y - ball.vy;
-
-    // Check if ball trajectory intersects the line
-    return lineSegmentsIntersect(
-        prevX, prevY, ball.x, ball.y,
-        line.x1, line.y1, line.x2, line.y2
-    );
+    // Don't check the ball's own line
+    if (ball === line.ball) return false;
+    
+    // Calculate distance from ball center to line segment
+    const dx = line.x2 - line.x1;
+    const dy = line.y2 - line.y1;
+    const lengthSquared = dx * dx + dy * dy;
+    
+    // If line has no length, check point distance
+    if (lengthSquared === 0) {
+        const distX = ball.x - line.x1;
+        const distY = ball.y - line.y1;
+        return Math.sqrt(distX * distX + distY * distY) <= ball.radius;
+    }
+    
+    // Calculate projection of ball onto line segment
+    const t = Math.max(0, Math.min(1, 
+        ((ball.x - line.x1) * dx + (ball.y - line.y1) * dy) / lengthSquared
+    ));
+    
+    const projX = line.x1 + t * dx;
+    const projY = line.y1 + t * dy;
+    
+    const distX = ball.x - projX;
+    const distY = ball.y - projY;
+    const distance = Math.sqrt(distX * distX + distY * distY);
+    
+    return distance <= ball.radius;
 }
 
 // Initialize balls
@@ -166,8 +204,12 @@ function initBalls() {
     balls = [];
     lines = [];
     const numBalls = parseInt(document.getElementById('numBalls').value);
-    bigBallRadius = parseInt(document.getElementById('bigBallRadius').value);
-    smallBallRadius = parseInt(document.getElementById('smallBallRadius').value);
+    
+    // Keep ball size consistent at 7px for all arena sizes
+    smallBallRadius = 7;
+    
+    // Resize canvas to fit the big ball
+    resizeCanvas(bigBallRadius);
 
     for (let i = 0; i < numBalls; i++) {
         let x, y;
@@ -200,41 +242,57 @@ function animate() {
     ctx.beginPath();
     ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
     ctx.strokeStyle = '#667eea';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 5;
     ctx.stroke();
 
-    // Update and draw lines
-    for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i];
-        
-        // Update line endpoint to ball position
+    // First, update all line endpoints
+    for (const line of lines) {
         line.x2 = line.ball.x;
         line.y2 = line.ball.y;
-
-        // Check if any other ball crosses this line
+    }
+    
+    // Check for line crossings and mark lines for removal
+    const linesToRemove = new Set();
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        // Skip if already marked for removal
+        if (linesToRemove.has(line)) continue;
+        
+        // Check if any ball crosses this line
         for (const ball of balls) {
-            if (ball !== line.ball && checkLineCrossing(ball, line)) {
-                // Remove line
-                const lineIndex = line.ball.lines.indexOf(line);
-                if (lineIndex > -1) {
-                    line.ball.lines.splice(lineIndex, 1);
-                }
-                lines.splice(i, 1);
+            if (checkLineCrossing(ball, line)) {
+                linesToRemove.add(line);
                 break;
             }
         }
-
-        // Draw line if it still exists
-        if (lines[i] === line) {
-            ctx.beginPath();
-            ctx.moveTo(line.x1, line.y1);
-            ctx.lineTo(line.x2, line.y2);
-            ctx.strokeStyle = line.color;
-            ctx.lineWidth = 3;
-            ctx.globalAlpha = 0.6;
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
+    }
+    
+    // Remove marked lines
+    for (const lineToRemove of linesToRemove) {
+        // Remove from ball's lines array
+        const lineIndex = lineToRemove.ball.lines.indexOf(lineToRemove);
+        if (lineIndex > -1) {
+            lineToRemove.ball.lines.splice(lineIndex, 1);
         }
+        
+        // Remove from global lines array
+        const globalIndex = lines.indexOf(lineToRemove);
+        if (globalIndex > -1) {
+            lines.splice(globalIndex, 1);
+        }
+    }
+    
+    // Draw remaining lines
+    for (const line of lines) {
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
     }
 
     // Remove balls with no lines (only if they previously had lines)
@@ -300,16 +358,36 @@ resetBtn.addEventListener('click', () => {
     }
     balls = [];
     lines = [];
+    
+    // bigBallRadius is set by arena size buttons, no need to update here
+    resizeCanvas(bigBallRadius);
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw big ball
     ctx.beginPath();
     ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
     ctx.strokeStyle = '#667eea';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 5;
     ctx.stroke();
     
     statusDiv.textContent = 'Ready to start';
+});
+
+// Arena size controls
+const mediumArenaBtn = document.getElementById('mediumArenaBtn');
+const bigArenaBtn = document.getElementById('bigArenaBtn');
+
+mediumArenaBtn.addEventListener('click', () => {
+    bigBallRadius = 250;
+    mediumArenaBtn.classList.add('active');
+    bigArenaBtn.classList.remove('active');
+});
+
+bigArenaBtn.addEventListener('click', () => {
+    bigBallRadius = 400;
+    mediumArenaBtn.classList.remove('active');
+    bigArenaBtn.classList.add('active');
 });
 
 // Speed controls
