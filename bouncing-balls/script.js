@@ -1,133 +1,148 @@
-// Canvas and context
+// Canvas and context - Main drawing surface and controls
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const startBtn = document.getElementById('startBtn');
+const playBtn = document.getElementById('playBtn');
+const speedSelect = document.getElementById('speedSelect');
+const infoBtn = document.getElementById('infoBtn');
+const modal = document.getElementById('infoModal');
+const modalClose = document.getElementById('modalClose');
 
-// Game state
+// Game state - Tracks current game status and ball collection
 let balls = [];
 let lines = [];
+let dustParticles = [];
 let animationId = null;
 let isRunning = false;
-let bigBallRadius = 350;
+let isPaused = false;
 let smallBallRadius = 7;
-let speedMultiplier = 2.5; // Fast speed
-let centerX = canvas.width / 2;
-let centerY = canvas.height / 2;
-let isFullScreenMode = false;
-let hasSimulationRun = false; // Track if simulation has ever started
+let speedMultiplier = 2.5;
 
-// Physics constants
-const GRAVITY = 0.15; // Gravity acceleration (pixels per frame squared)
-const VELOCITY_DAMPING = 0.9995; // Damping factor to gradually slow balls (1.0 = no damping)
-const BOUNCE_ENERGY_LOSS = 0.99; // Energy retained after wall bounce (1.0 = no loss)
-const MIN_VELOCITY_BOOST = 1.5; // Minimum speed threshold - if ball is slower, give it a boost
-const RANDOM_BOOST_CHANCE = 0.25; // 25% chance of getting a velocity boost on wall bounce
-const RANDOM_BOOST_MIN = 1.15; // Minimum boost factor (15% increase)
-const RANDOM_BOOST_MAX = 1.35; // Maximum boost factor (35% increase)
+// Physics constants - Fine-tuned for engaging gameplay
+const GRAVITY = 0.15;                    // Downward acceleration per frame
+const VELOCITY_DAMPING = 0.9995;         // Air resistance (very small to keep balls moving)
+const BOUNCE_ENERGY_LOSS = 0.99;         // Energy retained after wall collision (1% loss)
+const MIN_VELOCITY_BOOST = 1.5;          // Minimum speed to prevent balls from getting stuck
+const MAX_SPEED = 12;                    // Maximum speed to prevent balls from going too fast
+const RANDOM_BOOST_CHANCE = 0.25;        // 25% chance of random boost on bounce
+const RANDOM_BOOST_MIN = 1.15;           // Minimum boost multiplier (15% increase)
+const RANDOM_BOOST_MAX = 1.35;           // Maximum boost multiplier (35% increase)
+const MAX_LINES = 10;                    // Maximum number of lines to keep on screen
+
+// Dust particle class for line removal effects
+class DustParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = (Math.random() - 0.5) * 4;
+        this.size = 2 + Math.random() * 3;
+        this.color = color;
+        this.life = 1.0;  // 1.0 = full life, 0.0 = dead
+        this.decay = 0.02 + Math.random() * 0.03;  // How fast it fades
+    }
+    
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.95;  // Slow down
+        this.vy *= 0.95;
+        this.life -= this.decay;
+    }
+    
+    draw() {
+        if (this.life <= 0) return;
+        
+        ctx.save();
+        ctx.globalAlpha = this.life * 0.8;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+// Create dust particles along a line
+function createDustEffect(line) {
+    const numParticles = 8 + Math.floor(Math.random() * 8);  // 8-15 particles
+    
+    for (let i = 0; i < numParticles; i++) {
+        // Random position along the line
+        const t = Math.random();
+        const x = line.x1 + (line.x2 - line.x1) * t;
+        const y = line.y1 + (line.y2 - line.y1) * t;
+        
+        dustParticles.push(new DustParticle(x, y, line.color));
+    }
+}
 
 // Ball emoji collection with their representative colors
 const ballEmojis = [
-    { emoji: '⚽', color: '#000000' }, // Soccer ball - Black
-    { emoji: '🏀', color: '#FF6B35' }, // Basketball - Orange
-    { emoji: '🏈', color: '#8B4513' }, // Football - Brown
-    { emoji: '⚾', color: '#FFFFFF' }, // Baseball - White
-    { emoji: '🎾', color: '#CCFF00' }, // Tennis ball - Yellow-green
-    { emoji: '🏐', color: '#FFFFFF' }, // Volleyball - White
-    { emoji: '🏉', color: '#8B4513' }, // Rugby ball - Brown
-    { emoji: '🥎', color: '#FFEB3B' }, // Softball - Yellow
-    { emoji: '🎱', color: '#000000' }, // Pool 8 ball - Black
-    { emoji: '🔴', color: '#FF0000' }, // Red circle - Red
-    { emoji: '🟠', color: '#FF9500' }, // Orange circle - Orange
-    { emoji: '🟡', color: '#FFEB3B' }, // Yellow circle - Yellow
-    { emoji: '🟢', color: '#34C759' }, // Green circle - Green
-    { emoji: '🔵', color: '#007AFF' }, // Blue circle - Blue
-    { emoji: '🟣', color: '#AF52DE' }, // Purple circle - Purple
-    { emoji: '🟤', color: '#A2845E' }, // Brown circle - Brown
-    { emoji: '⚪', color: '#FFFFFF' }, // White circle - White
-    { emoji: '⚫', color: '#000000' }, // Black circle - Black
-    { emoji: '🌕', color: '#F4E8C1' }, // Full moon - Cream/light yellow
-    { emoji: '🌍', color: '#4A90E2' }, // Earth - Blue
-    { emoji: '🌎', color: '#5AC8FA' }, // Earth Americas - Light blue
-    { emoji: '🌏', color: '#30B0C7' }, // Earth Asia-Australia - Cyan blue
-    { emoji: '🪀', color: '#FF3B30' }  // Yo-yo - Red
+    { emoji: '🏀', color: '#FF6B35' },
+    { emoji: '🏈', color: '#D2691E' },
+    { emoji: '⚾', color: '#F0E68C' },
+    { emoji: '🎾', color: '#CCFF00' },
+    { emoji: '🏐', color: '#F0E68C' },
+    { emoji: '🏉', color: '#D2691E' },
+    { emoji: '🥎', color: '#FFEB3B' },
+    { emoji: '🔴', color: '#FF0000' },
+    { emoji: '🟠', color: '#FF9500' },
+    { emoji: '🟡', color: '#FFEB3B' },
+    { emoji: '🟢', color: '#34C759' },
+    { emoji: '🔵', color: '#007AFF' },
+    { emoji: '🟣', color: '#AF52DE' },
+    { emoji: '🟤', color: '#D2691E' },
+    { emoji: '⚪', color: '#F0E68C' },
+    { emoji: '🌕', color: '#F4E8C1' },
+    { emoji: '🌍', color: '#4A90E2' },
+    { emoji: '🌎', color: '#5AC8FA' },
+    { emoji: '🌏', color: '#30B0C7' },
+    { emoji: '🪀', color: '#FF3B30' }
 ];
 
 // Get random ball emoji with its color
+// Returns: {emoji: string, color: string}
 function randomBallEmoji() {
     return ballEmojis[Math.floor(Math.random() * ballEmojis.length)];
 }
 
-// Function to resize canvas based on big ball radius or full screen mode
-function resizeCanvas(radius) {
-    if (isFullScreenMode) {
-        // Full screen mode: use entire viewport
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Calculate 5% padding from all edges
-        const paddingX = canvas.width * 0.05;
-        const paddingY = canvas.height * 0.05;
-        
-        // Calculate the largest circle that fits in the viewport with 5% margins
-        const availableWidth = canvas.width - paddingX * 2;
-        const availableHeight = canvas.height - paddingY * 2;
-        bigBallRadius = Math.min(availableWidth, availableHeight) / 2;
-        
-        centerX = canvas.width / 2;
-        centerY = canvas.height / 2;
-        
-        // Apply full screen styling
-        canvas.classList.add('fullscreen');
-        document.body.classList.add('fullscreen-active');
-    } else {
-        // Normal mode
-        const padding = 20;
-        const size = Math.max(600, (radius * 2) + padding * 2);
-        canvas.width = size;
-        canvas.height = size;
-        centerX = canvas.width / 2;
-        centerY = canvas.height / 2;
-        
-        // Remove full screen styling
-        canvas.classList.remove('fullscreen');
-        document.body.classList.remove('fullscreen-active');
-    }
+// Resize canvas to fill available space
+// Called on initialization and window resize
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 70; // Reserve space for navigation bar
 }
 
-// Check if a point is inside the big ball
-function isInsideBigBall(x, y, radius) {
-    const dx = x - centerX;
-    const dy = y - centerY;
-    return Math.sqrt(dx * dx + dy * dy) + radius <= bigBallRadius;
-}
-
-// Ball class
+// Ball class - Represents a single ball with physics, trail, and line management
 class Ball {
     constructor(x, y, vx, vy, radius, color, emoji) {
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
-        this.radius = radius;
-        this.color = color;
-        this.emoji = emoji;
-        this.lines = [];
-        this.hasHadLines = false;
-        this.prevX = x;
-        this.prevY = y;
-        this.trail = []; // Array to store trail positions
-        this.maxTrailLength = 15; // Number of trail segments
+        this.x = x;                     // Current X position
+        this.y = y;                     // Current Y position
+        this.vx = vx;                   // X velocity
+        this.vy = vy;                   // Y velocity
+        this.radius = radius;           // Ball size
+        this.color = color;             // Trail and line color
+        this.emoji = emoji;             // Display emoji
+        this.lines = [];                // Lines attached to this ball
+        this.hasHadLines = false;       // Flag to track if ball ever had lines
+        this.prevX = x;                 // Previous X for collision detection
+        this.prevY = y;                 // Previous Y for collision detection
+        this.trail = [];                // Trail effect positions
+        this.maxTrailLength = 15;       // Max trail segments to display
     }
 
     update() {
-        // Store previous position for accurate trajectory tracking
+        // Store previous position for smooth interpolation
         this.prevX = this.x;
         this.prevY = this.y;
         
-        // Add current position to trail
+        // Add current position to trail for visual effect
         this.trail.push({ x: this.x, y: this.y });
         
-        // Keep trail at max length
         if (this.trail.length > this.maxTrailLength) {
             this.trail.shift();
         }
@@ -135,63 +150,97 @@ class Ball {
         // Apply gravity to vertical velocity
         this.vy += GRAVITY;
         
-        // Apply velocity damping (air resistance)
+        // Apply air resistance to slow down balls slightly
         this.vx *= VELOCITY_DAMPING;
         this.vy *= VELOCITY_DAMPING;
         
-        // Prevent balls from getting stuck - add minimum velocity boost
+        // Speed management - prevent balls from being too slow or too fast
         const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        
+        // Minimum speed boost - prevents balls from getting too slow and stuck
         if (currentSpeed < MIN_VELOCITY_BOOST && currentSpeed > 0.1) {
             const boostFactor = MIN_VELOCITY_BOOST / currentSpeed;
             this.vx *= boostFactor;
             this.vy *= boostFactor;
         }
         
-        // Update position
+        // Maximum speed cap - prevents balls from going too fast
+        if (currentSpeed > MAX_SPEED) {
+            const capFactor = MAX_SPEED / currentSpeed;
+            this.vx *= capFactor;
+            this.vy *= capFactor;
+        }
+        
+        // Update position based on velocity
         this.x += this.vx;
         this.y += this.vy;
 
-        // Check collision with big ball wall
-        const dx = this.x - centerX;
-        const dy = this.y - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance + this.radius > bigBallRadius) {
-            // Bounce off wall
-            const angle = Math.atan2(dy, dx);
-            this.x = centerX + (bigBallRadius - this.radius) * Math.cos(angle);
-            this.y = centerY + (bigBallRadius - this.radius) * Math.sin(angle);
-
-            // Reflect velocity
-            const normalX = dx / distance;
-            const normalY = dy / distance;
-            const dotProduct = this.vx * normalX + this.vy * normalY;
-            this.vx = this.vx - 2 * dotProduct * normalX;
-            this.vy = this.vy - 2 * dotProduct * normalY;
-
-            // Apply energy loss on bounce (instead of increase)
-            this.vx *= BOUNCE_ENERGY_LOSS;
-            this.vy *= BOUNCE_ENERGY_LOSS;
-
-            // Random chance of velocity boost on wall bounce
+        // Wall collision detection and bounce physics
+        let bounced = false;
+        
+        // Left wall
+        if (this.x - this.radius < 0) {
+            this.x = this.radius;
+            this.vx = Math.abs(this.vx) * BOUNCE_ENERGY_LOSS;
+            bounced = true;
+        }
+        
+        // Right wall
+        if (this.x + this.radius > canvas.width) {
+            this.x = canvas.width - this.radius;
+            this.vx = -Math.abs(this.vx) * BOUNCE_ENERGY_LOSS;
+            bounced = true;
+        }
+        
+        // Top wall
+        if (this.y - this.radius < 0) {
+            this.y = this.radius;
+            this.vy = Math.abs(this.vy) * BOUNCE_ENERGY_LOSS;
+            bounced = true;
+        }
+        
+        // Bottom wall
+        if (this.y + this.radius > canvas.height) {
+            this.y = canvas.height - this.radius;
+            this.vy = -Math.abs(this.vy) * BOUNCE_ENERGY_LOSS;
+            bounced = true;
+        }
+        
+        // Random boost on bounce - adds unpredictability and excitement
+        if (bounced) {
             if (Math.random() < RANDOM_BOOST_CHANCE) {
                 const boostFactor = RANDOM_BOOST_MIN + Math.random() * (RANDOM_BOOST_MAX - RANDOM_BOOST_MIN);
                 this.vx *= boostFactor;
                 this.vy *= boostFactor;
             }
-
-            // Create line on bounce
+            
+            // Create a new line from wall to ball position
             this.createLine();
         }
     }
 
     createLine() {
-        // Calculate the point on the wall where the ball touches
-        const dx = this.x - centerX;
-        const dy = this.y - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const wallX = centerX + (bigBallRadius * dx) / distance;
-        const wallY = centerY + (bigBallRadius * dy) / distance;
+        // Determine which wall was hit by finding minimum distance
+        // Creates line from nearest wall edge to ball center
+        let wallX = this.x;
+        let wallY = this.y;
+        
+        const distToLeft = Math.abs(this.x - this.radius);
+        const distToRight = Math.abs(this.x - (canvas.width - this.radius));
+        const distToTop = Math.abs(this.y - this.radius);
+        const distToBottom = Math.abs(this.y - (canvas.height - this.radius));
+        
+        const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+        
+        if (minDist === distToLeft) {
+            wallX = 0;
+        } else if (minDist === distToRight) {
+            wallX = canvas.width;
+        } else if (minDist === distToTop) {
+            wallY = 0;
+        } else {
+            wallY = canvas.height;
+        }
         
         const line = {
             x1: wallX,
@@ -199,37 +248,57 @@ class Ball {
             x2: this.x,
             y2: this.y,
             color: this.color,
-            ball: this
+            ball: this,
+            timestamp: Date.now()  // Track creation time for removal
         };
         lines.push(line);
         this.lines.push(line);
         this.hasHadLines = true;
+        
+        // Enforce maximum line limit - remove oldest lines
+        if (lines.length > MAX_LINES) {
+            // Sort by timestamp to find oldest lines
+            const sortedLines = [...lines].sort((a, b) => a.timestamp - b.timestamp);
+            const linesToRemove = sortedLines.slice(0, lines.length - MAX_LINES);
+            
+            for (const oldLine of linesToRemove) {
+                // Create dust effect before removing
+                createDustEffect(oldLine);
+                
+                // Remove from ball's line array
+                const ballLineIndex = oldLine.ball.lines.indexOf(oldLine);
+                if (ballLineIndex > -1) {
+                    oldLine.ball.lines.splice(ballLineIndex, 1);
+                }
+                
+                // Remove from global lines array
+                const globalIndex = lines.indexOf(oldLine);
+                if (globalIndex > -1) {
+                    lines.splice(globalIndex, 1);
+                }
+            }
+        }
     }
 
     drawTrail() {
+        // Skip if not enough trail points for a line
         if (this.trail.length < 2) return;
         
-        // Draw trail segments with fading opacity
+        // Draw trail segments with fading opacity and thickness
         for (let i = 0; i < this.trail.length - 1; i++) {
             const segment = this.trail[i];
             const nextSegment = this.trail[i + 1];
             
-            // Calculate opacity based on position in trail (older = more transparent)
             const opacity = (i / this.trail.length) * 0.6;
-            
-            // Calculate trail thickness (gets thinner towards the back)
             const thickness = this.radius * 2 * (0.3 + (i / this.trail.length) * 0.7);
             
-            // Parse the color to get RGB values
             let r, g, b;
             if (this.color.startsWith('#')) {
-                // Hex color
                 const hex = this.color.substring(1);
                 r = parseInt(hex.substring(0, 2), 16);
                 g = parseInt(hex.substring(2, 4), 16);
                 b = parseInt(hex.substring(4, 6), 16);
             } else if (this.color.startsWith('hsl')) {
-                // For HSL, we'll use a simpler approach - just use the color with opacity
                 ctx.strokeStyle = this.color.replace(')', `, ${opacity})`).replace('hsl', 'hsla');
                 ctx.lineWidth = thickness;
                 ctx.lineCap = 'round';
@@ -242,7 +311,6 @@ class Ball {
                 continue;
             }
             
-            // Draw trail segment
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
             ctx.lineWidth = thickness;
             ctx.lineCap = 'round';
@@ -256,12 +324,12 @@ class Ball {
     }
 
     draw() {
-        // Draw emoji instead of circle
+        // Draw emoji with shadow for depth effect
         ctx.font = `${this.radius * 2.8}px "Open Sans", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Add a subtle shadow for depth
+        // Add subtle shadow for 3D effect
         ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
         ctx.shadowBlur = 4;
         ctx.shadowOffsetX = 1;
@@ -269,7 +337,7 @@ class Ball {
         
         ctx.fillText(this.emoji, this.x, this.y);
         
-        // Reset shadow
+        // Reset shadow to avoid affecting other drawings
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
@@ -277,40 +345,42 @@ class Ball {
     }
 }
 
-// Check collision between two balls
+// Elastic collision between two balls using conservation of momentum
+// Uses rotation matrix to simplify collision in the contact direction
 function checkBallCollision(ball1, ball2) {
+    // Calculate distance between ball centers
     const dx = ball2.x - ball1.x;
     const dy = ball2.y - ball1.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
+    // Check if balls are overlapping
     if (distance < ball1.radius + ball2.radius) {
-        // Collision detected
+        // Collision angle between the two balls
         const angle = Math.atan2(dy, dx);
         const sin = Math.sin(angle);
         const cos = Math.cos(angle);
 
-        // Calculate current speeds
+        // Store initial speeds to maintain total energy
         const speed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
         const speed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
-        const maxSpeed = Math.max(speed1, speed2);
 
-        // Rotate velocities
+        // Rotate velocities to collision coordinate system
         const vx1 = ball1.vx * cos + ball1.vy * sin;
         const vy1 = ball1.vy * cos - ball1.vx * sin;
         const vx2 = ball2.vx * cos + ball2.vy * sin;
         const vy2 = ball2.vy * cos - ball2.vx * sin;
 
-        // Collision reaction (swap velocities along collision axis)
+        // Exchange velocities along collision axis (elastic collision)
         const vx1Final = vx2;
         const vx2Final = vx1;
 
-        // Rotate back
+        // Rotate velocities back to world coordinate system
         ball1.vx = vx1Final * cos - vy1 * sin;
         ball1.vy = vy1 * cos + vx1Final * sin;
         ball2.vx = vx2Final * cos - vy2 * sin;
         ball2.vy = vy2 * cos + vx2Final * sin;
 
-        // Scale both velocities to average speed (instead of max) to reduce energy
+        // Normalize speeds to average to prevent energy buildup
         const avgSpeed = (speed1 + speed2) / 2;
         const newSpeed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
         const newSpeed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
@@ -324,7 +394,7 @@ function checkBallCollision(ball1, ball2) {
             ball2.vy = (ball2.vy / newSpeed2) * avgSpeed;
         }
 
-        // Separate balls
+        // Separate balls to prevent sticking together
         const overlap = ball1.radius + ball2.radius - distance;
         const separateX = (overlap / 2) * cos;
         const separateY = (overlap / 2) * sin;
@@ -335,80 +405,58 @@ function checkBallCollision(ball1, ball2) {
     }
 }
 
-// Check if ball crosses a line (using circle-line segment distance)
+// Line-circle intersection using point-to-line-segment distance
+// Returns true if ball's circle intersects with the line segment
 function checkLineCrossing(ball, line) {
-    // Allow balls without lines to remove any line (including their own if they had any)
-    // Otherwise, don't check the ball's own line
+    // Ball can't cross its own lines
     if (ball.lines.length > 0 && ball === line.ball) return false;
     
-    // Calculate distance from ball center to line segment
     const dx = line.x2 - line.x1;
     const dy = line.y2 - line.y1;
     const lengthSquared = dx * dx + dy * dy;
     
-    // If line has no length, check point distance
+    // Handle degenerate case where line is a point
     if (lengthSquared === 0) {
         const distX = ball.x - line.x1;
         const distY = ball.y - line.y1;
         return Math.sqrt(distX * distX + distY * distY) <= ball.radius;
     }
     
-    // Calculate projection of ball onto line segment
+    // Project ball center onto line segment (clamped to [0,1])
+    // t=0 means projection at line start, t=1 at line end
     const t = Math.max(0, Math.min(1, 
         ((ball.x - line.x1) * dx + (ball.y - line.y1) * dy) / lengthSquared
     ));
     
+    // Calculate closest point on line segment to ball center
     const projX = line.x1 + t * dx;
     const projY = line.y1 + t * dy;
     
+    // Calculate distance from ball center to closest point
     const distX = ball.x - projX;
     const distY = ball.y - projY;
     const distance = Math.sqrt(distX * distX + distY * distY);
     
+    // Ball crosses line if distance is less than radius
     return distance <= ball.radius;
 }
 
-// Initialize balls
-async function initBalls() {
+// Initialize balls with random positions and velocities
+function initBalls() {
     balls = [];
     lines = [];
+    dustParticles = [];  // Clear dust particles on restart
     const numBalls = parseInt(document.getElementById('numBalls').value);
     
-    // Keep ball size consistent at 7px for all arena sizes
     smallBallRadius = 7;
     
-    // Enter fullscreen if Full Screen mode is selected
-    if (isFullScreenMode) {
-        try {
-            if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
-            } else if (document.documentElement.webkitRequestFullscreen) {
-                await document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) {
-                await document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.msRequestFullscreen) {
-                await document.documentElement.msRequestFullscreen();
-            }
-        } catch (err) {
-            console.error('Error attempting to enable full screen:', err);
-        }
-    }
-    
-    // Resize canvas to fit the big ball
-    resizeCanvas(bigBallRadius);
+    resizeCanvas();
 
     for (let i = 0; i < numBalls; i++) {
-        let x, y;
-        let attempts = 0;
-        
-        // Find a valid position inside the big ball
-        do {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * (bigBallRadius - smallBallRadius * 2);
-            x = centerX + distance * Math.cos(angle);
-            y = centerY + distance * Math.sin(angle);
-            attempts++;
-        } while (!isInsideBigBall(x, y, smallBallRadius) && attempts < 100);
+        // Random position within canvas bounds with margin
+        const margin = smallBallRadius * 2;
+        const x = margin + Math.random() * (canvas.width - margin * 2);
+        const y = margin + Math.random() * (canvas.height - margin * 2);
 
         const speed = (1.1 + Math.random() * 0.4) * speedMultiplier;
         const angle = Math.random() * Math.PI * 2;
@@ -422,29 +470,21 @@ async function initBalls() {
     }
 }
 
-// Animation loop
+// Main animation loop - runs at ~60fps via requestAnimationFrame
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw big ball
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = isFullScreenMode ? '#00f5ff' : '#667eea';
-    ctx.lineWidth = 5;
-    ctx.stroke();
-
-    // First, update all line endpoints
+    // Update line endpoints to follow attached balls
     for (const line of lines) {
         line.x2 = line.ball.x;
         line.y2 = line.ball.y;
     }
     
-    // Check for line crossings and mark lines for removal
+    // Check for line crossings - lines disappear when any ball touches them
     const linesToRemove = new Set();
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         
-        // Skip if already marked for removal
         if (linesToRemove.has(line)) continue;
         
         // Check if any ball crosses this line
@@ -456,37 +496,54 @@ function animate() {
         }
     }
     
-    // Remove marked lines
+    // Remove crossed lines from ball's line array and global lines array
     for (const lineToRemove of linesToRemove) {
-        // Remove from ball's lines array
+        // Create dust effect when line is crossed by a ball
+        createDustEffect(lineToRemove);
+        
         const lineIndex = lineToRemove.ball.lines.indexOf(lineToRemove);
         if (lineIndex > -1) {
             lineToRemove.ball.lines.splice(lineIndex, 1);
         }
         
-        // Remove from global lines array
         const globalIndex = lines.indexOf(lineToRemove);
         if (globalIndex > -1) {
             lines.splice(globalIndex, 1);
         }
     }
     
-    // Draw remaining lines
+    // Update and draw dust particles
+    for (let i = dustParticles.length - 1; i >= 0; i--) {
+        dustParticles[i].update();
+        
+        if (dustParticles[i].isDead()) {
+            dustParticles.splice(i, 1);
+        }
+    }
+    
+    for (const particle of dustParticles) {
+        particle.draw();
+    }
+    
+    // Draw remaining lines with light styling
     for (const line of lines) {
+        // Draw single colored line without dark outline
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
         ctx.lineTo(line.x2, line.y2);
         ctx.strokeStyle = line.color;
         ctx.lineWidth = 3;
-        ctx.globalAlpha = 0.6;
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = 0.7;
         ctx.stroke();
         ctx.globalAlpha = 1.0;
     }
 
-    // Remove balls with no lines (only if they previously had lines)
+    // Remove balls that have lost all their lines (elimination mechanic)
+    // Only remove if ball has had lines before and there's more than one ball
     for (let i = balls.length - 1; i >= 0; i--) {
         if (balls[i].hasHadLines && balls[i].lines.length === 0 && balls.length > 1) {
-            // Remove all lines associated with this ball
+            // Clean up any orphaned lines belonging to this ball
             for (let j = lines.length - 1; j >= 0; j--) {
                 if (lines[j].ball === balls[i]) {
                     lines.splice(j, 1);
@@ -496,24 +553,18 @@ function animate() {
         }
     }
 
-    // Check if only one ball remains - last ball standing wins
+    // Game over: only one ball remains - the winner!
     if (balls.length === 1) {
         isRunning = false;
+        isPaused = true;
         if (animationId) {
             cancelAnimationFrame(animationId);
         }
-        updateStartButton();
-        // Continue to draw the final state
+        updatePlayButton();
+        
+        // Draw final state
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw big ball
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = isFullScreenMode ? '#00f5ff' : '#667eea';
-        ctx.lineWidth = 5;
-        ctx.stroke();
-        
-        // Draw all lines
         for (const line of lines) {
             ctx.beginPath();
             ctx.moveTo(line.x1, line.y1);
@@ -525,14 +576,12 @@ function animate() {
             ctx.globalAlpha = 1.0;
         }
         
-        // Draw the final ball with trail
         balls[0].drawTrail();
         balls[0].draw();
         
-        // Draw reset button in the middle of canvas
         drawResetButton();
         
-        return; // Exit animation loop
+        return;
     }
 
     // Update balls
@@ -553,8 +602,7 @@ function animate() {
         ball.draw();
     }
 
-    // Update button
-    updateStartButton();
+    updatePlayButton();
 
     if (isRunning) {
         animationId = requestAnimationFrame(animate);
@@ -563,352 +611,143 @@ function animate() {
 
 // Draw reset button on canvas
 function drawResetButton() {
-    if (isFullScreenMode) {
-        // Fullscreen mode: circular button matching fullscreen controls
-        const buttonRadius = 60; // Larger than 30 for mobile touch
-        const buttonX = centerX;
-        const buttonY = centerY;
-        
-        // Draw circular button with white background
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 4;
-        
-        ctx.beginPath();
-        ctx.arc(buttonX, buttonY, buttonRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Draw emoji only
-        ctx.fillStyle = '#333';
-        ctx.font = '48px "Open Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🔄', buttonX, buttonY);
-        
-        // Store button bounds for click detection
-        canvas.resetButtonBounds = {
-            x: buttonX - buttonRadius,
-            y: buttonY - buttonRadius,
-            width: buttonRadius * 2,
-            height: buttonRadius * 2,
-            isCircular: true,
-            centerX: buttonX,
-            centerY: buttonY,
-            radius: buttonRadius
-        };
-    } else {
-        // Normal mode: rectangular button with gradient
-        const buttonWidth = 200;
-        const buttonHeight = 60;
-        const buttonX = centerX - buttonWidth / 2;
-        const buttonY = centerY - buttonHeight / 2;
-        
-        // Draw button background with gradient
-        const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(1, '#764ba2');
-        
-        ctx.fillStyle = gradient;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 5;
-        
-        // Draw rounded rectangle
-        const radius = 10;
-        ctx.beginPath();
-        ctx.moveTo(buttonX + radius, buttonY);
-        ctx.lineTo(buttonX + buttonWidth - radius, buttonY);
-        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + radius);
-        ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - radius);
-        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - radius, buttonY + buttonHeight);
-        ctx.lineTo(buttonX + radius, buttonY + buttonHeight);
-        ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - radius);
-        ctx.lineTo(buttonX, buttonY + radius);
-        ctx.quadraticCurveTo(buttonX, buttonY, buttonX + radius, buttonY);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Draw button text
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 24px "Open Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🔄 New Game', centerX, centerY);
-        
-        // Store button bounds for click detection
-        canvas.resetButtonBounds = {
-            x: buttonX,
-            y: buttonY,
-            width: buttonWidth,
-            height: buttonHeight,
-            isCircular: false
-        };
-    }
+    const buttonRadius = 60;
+    const buttonX = canvas.width / 2;
+    const buttonY = canvas.height / 2;
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4;
+    
+    ctx.beginPath();
+    ctx.arc(buttonX, buttonY, buttonRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    
+    ctx.fillStyle = '#333';
+    ctx.font = '48px "Open Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔄', buttonX, buttonY);
+    
+    canvas.resetButtonBounds = {
+        centerX: buttonX,
+        centerY: buttonY,
+        radius: buttonRadius,
+        isCircular: true
+    };
 }
 
-// Update start button text based on simulation state
-function updateStartButton() {
+// Update play button text
+function updatePlayButton() {
     if (isRunning) {
-        // Simulation is running - show Stop button
-        startBtn.textContent = `⏹️ Stop (${balls.length} balls remaining)`;
-        fullscreenStartBtn.textContent = '⏹️';
-        fullscreenStartBtn.title = 'Stop';
-        // Disable arena size buttons when running
-        mediumArenaBtn.disabled = true;
-        fullScreenArenaBtn.disabled = true;
-    } else if (hasSimulationRun) {
-        // Simulation has run before and is now stopped - show Restart button
-        startBtn.textContent = '🔄 Restart';
-        fullscreenStartBtn.textContent = '🔄';
-        fullscreenStartBtn.title = 'Restart';
-        // Enable arena size buttons when stopped
-        mediumArenaBtn.disabled = false;
-        fullScreenArenaBtn.disabled = false;
+        playBtn.innerHTML = `<i class="fas fa-pause"></i> Pause (${balls.length} balls)`;
+    } else if (isPaused) {
+        playBtn.innerHTML = '<i class="fas fa-redo"></i> Restart';
     } else {
-        // First time - show Play button
-        startBtn.textContent = '▶️ Play';
-        fullscreenStartBtn.textContent = '▶️';
-        fullscreenStartBtn.title = 'Play';
-        // Enable arena size buttons when stopped
-        mediumArenaBtn.disabled = false;
-        fullScreenArenaBtn.disabled = false;
+        playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
     }
 }
 
-// Start/Stop/Restart simulation toggle
-startBtn.addEventListener('click', async () => {
-    if (!isRunning) {
-        // Start or Restart simulation
-        await initBalls();
+// Play/Pause/Reset button handler - state machine with three states
+playBtn.addEventListener('click', () => {
+    if (!isRunning && !isPaused) {
+        // State 1: Start new game
+        initBalls();
         isRunning = true;
-        hasSimulationRun = true;
-        updateStartButton();
+        isPaused = false;
+        updatePlayButton();
         animate();
-    } else {
-        // Stop simulation
+    } else if (isRunning) {
+        // State 2: Pause current game
         isRunning = false;
+        isPaused = true;
         if (animationId) {
             cancelAnimationFrame(animationId);
         }
-        updateStartButton();
+        updatePlayButton();
+    } else if (isPaused) {
+        // State 3: Restart - immediately start a new game
+        canvas.resetButtonBounds = null;
+        initBalls();
+        isRunning = true;
+        isPaused = false;
+        updatePlayButton();
+        animate();
     }
 });
 
-// Arena size controls
-const mediumArenaBtn = document.getElementById('mediumArenaBtn');
-const fullScreenArenaBtn = document.getElementById('fullScreenArenaBtn');
+// Speed control
+speedSelect.addEventListener('change', (e) => {
+    speedMultiplier = parseFloat(e.target.value);
+});
 
-mediumArenaBtn.addEventListener('click', () => {
-    if (!isRunning) {
-        isFullScreenMode = false;
-        bigBallRadius = 350;
-        mediumArenaBtn.classList.add('active');
-        fullScreenArenaBtn.classList.remove('active');
-        resizeCanvas(bigBallRadius);
-        
-        // Redraw the arena
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = '#667eea';
-        ctx.lineWidth = 5;
-        ctx.stroke();
+// Modal controls
+infoBtn.addEventListener('click', () => {
+    modal.classList.add('active');
+});
+
+modalClose.addEventListener('click', () => {
+    modal.classList.remove('active');
+});
+
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.remove('active');
     }
 });
 
-fullScreenArenaBtn.addEventListener('click', () => {
-    if (!isRunning) {
-        isFullScreenMode = true;
-        mediumArenaBtn.classList.remove('active');
-        fullScreenArenaBtn.classList.add('active');
-    }
-});
-
-// Handle fullscreen change events
-document.addEventListener('fullscreenchange', handleFullscreenChange);
-document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-function handleFullscreenChange() {
-    const isCurrentlyFullscreen = document.fullscreenElement || 
-                                   document.webkitFullscreenElement || 
-                                   document.mozFullScreenElement || 
-                                   document.msFullscreenElement;
-    
-    if (!isCurrentlyFullscreen && isFullScreenMode) {
-        // User exited fullscreen (e.g., pressed ESC) - reset to medium
-        if (!isRunning) {
-            isFullScreenMode = false;
-            bigBallRadius = 350;
-            mediumArenaBtn.classList.add('active');
-            fullScreenArenaBtn.classList.remove('active');
-            resizeCanvas(bigBallRadius);
-            
-            // Redraw the arena
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = '#667eea';
-            ctx.lineWidth = 5;
-            ctx.stroke();
-        }
-    }
-}
-
-// Handle window resize in full screen mode
-window.addEventListener('resize', () => {
-    if (isFullScreenMode && !isRunning) {
-        resizeCanvas(0);
-        // Redraw the arena
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = '#667eea';
-        ctx.lineWidth = 5;
-        ctx.stroke();
-    }
-});
-
-// Full screen overlay controls
-const fullscreenStartBtn = document.getElementById('fullscreenStartBtn');
-const fullscreenExitBtn = document.getElementById('fullscreenExitBtn');
-
-fullscreenStartBtn.addEventListener('click', () => {
-    startBtn.click(); // Trigger the main start button
-});
-
-// Exit fullscreen function
-function exitFullscreen() {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-    } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-    }
-}
-
-// Handle both click and touch events for mobile compatibility
-fullscreenExitBtn.addEventListener('click', exitFullscreen);
-fullscreenExitBtn.addEventListener('touchend', (e) => {
-    e.preventDefault(); // Prevent ghost click
-    exitFullscreen();
-});
-
-// Also handle for start button
-fullscreenStartBtn.addEventListener('touchend', (e) => {
-    e.preventDefault(); // Prevent ghost click
-    startBtn.click();
-});
-
-// Speed controls
-const fastBtn = document.getElementById('fastBtn');
-const superFastBtn = document.getElementById('superFastBtn');
-
-fastBtn.addEventListener('click', () => {
-    speedMultiplier = 2.5;
-    fastBtn.classList.add('active');
-    superFastBtn.classList.remove('active');
-});
-
-superFastBtn.addEventListener('click', () => {
-    speedMultiplier = 5;
-    fastBtn.classList.remove('active');
-    superFastBtn.classList.add('active');
-});
-
-// Canvas click handler for restart button
+// Canvas click handler for reset button
 canvas.addEventListener('click', (event) => {
-    // Only handle clicks when simulation is stopped and button bounds exist
-    if (!isRunning && canvas.resetButtonBounds) {
+    if (!isRunning && isPaused && canvas.resetButtonBounds) {
         const rect = canvas.getBoundingClientRect();
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
         
         const bounds = canvas.resetButtonBounds;
-        let isClicked = false;
+        const dx = clickX - bounds.centerX;
+        const dy = clickY - bounds.centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (bounds.isCircular) {
-            // Check circular button collision
-            const dx = clickX - bounds.centerX;
-            const dy = clickY - bounds.centerY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            isClicked = distance <= bounds.radius;
-        } else {
-            // Check rectangular button collision
-            isClicked = clickX >= bounds.x && clickX <= bounds.x + bounds.width &&
-                       clickY >= bounds.y && clickY <= bounds.y + bounds.height;
-        }
-        
-        if (isClicked) {
-            // Restart button was clicked
-            startBtn.click();
-            canvas.resetButtonBounds = null; // Clear button bounds after click
+        if (distance <= bounds.radius) {
+            playBtn.click();
         }
     }
 });
 
-// Add hover effect for reset button on canvas
+// Hover effect for reset button
 canvas.addEventListener('mousemove', (event) => {
-    if (!isRunning && canvas.resetButtonBounds) {
+    if (!isRunning && isPaused && canvas.resetButtonBounds) {
         const rect = canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
         
         const bounds = canvas.resetButtonBounds;
-        let isHovering = false;
+        const dx = mouseX - bounds.centerX;
+        const dy = mouseY - bounds.centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (bounds.isCircular) {
-            // Check circular button hover
-            const dx = mouseX - bounds.centerX;
-            const dy = mouseY - bounds.centerY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            isHovering = distance <= bounds.radius;
-        } else {
-            // Check rectangular button hover
-            isHovering = mouseX >= bounds.x && mouseX <= bounds.x + bounds.width &&
-                        mouseY >= bounds.y && mouseY <= bounds.y + bounds.height;
-        }
-        
-        canvas.style.cursor = isHovering ? 'pointer' : 'default';
+        canvas.style.cursor = distance <= bounds.radius ? 'pointer' : 'default';
     } else {
         canvas.style.cursor = 'default';
     }
 });
 
-// Initial draw - set up canvas
-isRunning = false;
-hasSimulationRun = false;
-balls = [];
-lines = [];
+// Handle window resize - only resize when game is not running to avoid disruption
+window.addEventListener('resize', () => {
+    if (!isRunning) {
+        resizeCanvas();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+});
 
-resizeCanvas(bigBallRadius);
-
+// Initialize canvas and UI on page load
+resizeCanvas();
 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-// Draw big ball
-ctx.beginPath();
-ctx.arc(centerX, centerY, bigBallRadius, 0, Math.PI * 2);
-ctx.strokeStyle = '#667eea';
-ctx.lineWidth = 5;
-ctx.stroke();
-
-updateStartButton();
+updatePlayButton();

@@ -8,23 +8,29 @@
     <meta name="author" content="Prabhakar Gupta">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-    <meta property="og:title" content="Bouncing Balls - Physics Simulation Game">
+    <meta property="og:title" content="☄️ Bouncing Balls Simulation">
     <meta property="og:description" content="Watch colorful balls bounce and compete in a physics simulation. Last ball standing wins!">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/banner_image_generated.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Bouncing Balls - Physics Simulation Game">
+    <meta name="twitter:title" content="☄️ Bouncing Balls Simulation">
     <meta name="twitter:description" content="Watch colorful balls bounce and compete in a physics simulation. Last ball standing wins!">
     <meta name="twitter:image" content="https://prabhakar267.github.io/paper-games/bouncing-balls/assets/banner_image_generated.png">
-    <title>Bouncing Balls - Physics Simulation Game</title>
+    <title>☄️ Bouncing Balls Simulation</title>
     <link rel="icon" type="image/png" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
     <link rel="apple-touch-icon" href="https://prabhakar267.github.io/paper-games/common/assets/colored-pencil.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../common/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    
     <link rel="stylesheet" href="style.css">
     
     <!-- Google Analytics -->
@@ -39,96 +45,116 @@
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>⚽ Ball Physics Simulation</h1>
-        
-        <div class="game-layout">
-            <div class="controls">
-                <div class="control-group">
-                    <label for="numBalls">Number of Balls:</label>
-                    <input type="number" id="numBalls" min="2" max="50" value="8">
-                </div>
-                
-                <div class="control-group">
-                    <label>Arena Size:</label>
-                    <div class="button-group">
-                        <button id="mediumArenaBtn" class="speed-btn active">⚪ Medium</button>
-                        <button id="fullScreenArenaBtn" class="speed-btn">📱 Full Screen</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <label>Speed:</label>
-                    <div class="button-group">
-                        <button id="fastBtn" class="speed-btn active">🚀 Fast</button>
-                        <button id="superFastBtn" class="speed-btn">⚡ Super Fast</button>
-                    </div>
-                </div>
-                
-                <button id="startBtn" class="btn-primary">Start Simulation</button>
-                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none; width: 100%; margin-top: 10px;">Back to Games</a>
-            </div>
-            
-            <canvas id="canvas" width="700" height="700"></canvas>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <h1 class="nav-title">☄️ Bouncing Balls Simulation</h1>
         </div>
         
-        <!-- Full Screen Overlay Controls -->
-        <div id="fullscreenControls" class="fullscreen-controls">
-            <button id="fullscreenStartBtn" class="fullscreen-control-btn" title="Start/Stop">▶️</button>
-            <button id="fullscreenExitBtn" class="fullscreen-control-btn" title="Exit Fullscreen">❌</button>
-        </div>
-
-        <div class="info-sections">
-            <div class="collapsible-section">
-                <div class="section-header" onclick="toggleSection('rules')">
-                    <h3>How It Works</h3>
-                    <span class="toggle-icon collapsed" id="rules-icon">▶</span>
-                </div>
-                <div class="section-content collapsed" id="rules-content">
-                    <ul>
-                        <li><strong>Arena Physics:</strong> Balls bounce inside a circular arena with realistic gravity, air resistance, and energy loss on wall impacts</li>
-                        <li><strong>Line Creation:</strong> When a ball hits the arena wall, it creates a colored line from the wall contact point to the ball's center</li>
-                        <li><strong>Dynamic Lines:</strong> These lines stay attached to their ball and move with it as the ball continues bouncing</li>
-                        <li><strong>Line Crossing:</strong> When any ball's path crosses another ball's line, that line is instantly destroyed</li>
-                        <li><strong>Elimination:</strong> A ball is eliminated when all of its lines have been crossed and destroyed (it must have created at least one line first)</li>
-                        <li><strong>Victory:</strong> The last ball with remaining lines wins! Strategy involves protecting your lines while destroying others'</li>
-                        <li><strong>Visual Trails:</strong> Balls leave fading motion trails behind them to show their path (these are separate from the elimination lines)</li>
-                    </ul>
-                </div>
+        <div class="nav-center">
+            <div class="nav-control">
+                <label for="numBalls">Balls:</label>
+                <input type="number" id="numBalls" min="2" max="50" value="15">
             </div>
             
-            <div class="collapsible-section">
-                <div class="section-header" onclick="toggleSection('physics')">
-                    <h3>Physics & Mechanics Details</h3>
-                    <span class="toggle-icon collapsed" id="physics-icon">▶</span>
-                </div>
-                <div class="section-content collapsed" id="physics-content">
-                    <p><strong>Gravity & Damping:</strong> Balls experience constant downward gravity (0.15 px/frame²) and air resistance (0.9995 damping factor), creating natural-looking motion. A minimum velocity boost prevents balls from getting stuck.</p>
+            <div class="nav-control">
+                <label for="speedSelect">Speed:</label>
+                <select id="speedSelect">
+                    <option value="2.5" selected>Fast</option>
+                    <option value="5">Super Fast</option>
+                </select>
+            </div>
+            
+            <button id="playBtn" class="nav-btn nav-btn-primary"><i class="fas fa-play"></i> Play</button>
+        </div>
+        
+        <div class="nav-right">
+            <a href="https://github.com/prabhakar267/paper-games" target="_blank" rel="noopener noreferrer" class="nav-btn nav-btn-icon" title="View on GitHub">
+                <i class="fab fa-github"></i>
+            </a>
+            <button id="infoBtn" class="nav-btn nav-btn-icon" title="Information">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Canvas Arena -->
+    <canvas id="canvas"></canvas>
+    
+    <!-- Information Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>☄️ How It Works</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <section class="modal-section">
+                    <p>This is a <a href="https://en.wikipedia.org/wiki/Physics_engine" target="_blank" rel="noopener noreferrer">physics simulation</a> where colored balls bounce around a circular arena, competing for survival through an emergent line-crossing mechanic. Watch as balls move under realistic physics, creating colored tethers when they hit walls. The simulation ends when only one ball remains with intact lines—a beautiful demonstration of <a href="https://en.wikipedia.org/wiki/Chaos_theory" target="_blank" rel="noopener noreferrer">chaos</a>, collision, and competition.</p>
                     
-                    <p><strong>Wall Collisions:</strong> When a ball hits the circular arena wall, it reflects with 99% energy retention. Each wall bounce creates a colored line segment from the wall contact point to the ball's center. These lines are permanently attached to the ball and move with it.</p>
+                    <p>Each ball starts with random velocity and begins bouncing immediately. When a ball strikes the arena boundary, it spawns a colored line segment connecting the impact point to its center. These lines stay attached to the ball, moving as the ball continues its trajectory. The drama unfolds when balls cross each other's lines—any intersection destroys that line instantly. Once a ball has created lines but lost them all to crossings, it's eliminated. The last survivor wins.</p>
                     
-                    <p><strong>Ball-to-Ball Collisions:</strong> When two balls collide, they exchange velocities along the collision axis (elastic collision). Their speeds are averaged to prevent energy accumulation. Importantly, ball collisions do NOT create lines - only wall hits do.</p>
+                    <p>You'll notice motion trails following each ball—these ethereal streaks are purely visual, showing recent paths without affecting the simulation. The elimination mechanic depends solely on the colored lines created at wall impacts. It's a hypnotic dance of geometry, <a href="https://en.wikipedia.org/wiki/Momentum" target="_blank" rel="noopener noreferrer">momentum</a>, and chance.</p>
+                </section>
+                
+                <section class="modal-section">
+                    <h3>Physics Deep Dive</h3>
                     
-                    <p><strong>Line Destruction System:</strong> Every frame, the simulation checks if any ball's current position crosses any line segment using circle-line distance calculations. When a crossing is detected, that line is immediately removed. A ball can cross its own lines if it currently has no lines remaining.</p>
+                    <p><strong><a href="https://en.wikipedia.org/wiki/Gravitational_acceleration" target="_blank" rel="noopener noreferrer">Gravitational Acceleration</a>:</strong> The simulation applies a constant downward acceleration vector of 0.15 pixels per frame squared to each ball. This creates a <a href="https://en.wikipedia.org/wiki/Parabolic_trajectory" target="_blank" rel="noopener noreferrer">parabolic trajectory</a> pattern characteristic of projectile motion. The gravity constant was tuned to balance visual interest with reasonable simulation timescales—stronger gravity would cause rapid settling, while weaker gravity would result in floating behavior that diminishes wall collision frequency.</p>
                     
-                    <p><strong>Elimination Rules:</strong> A ball is removed from the game when:</p>
-                    <ul>
-                        <li>It has created at least one line (has bounced off a wall)</li>
-                        <li>All of its lines have been crossed and destroyed</li>
-                        <li>There are still multiple balls remaining in the arena</li>
-                    </ul>
+                    <p><strong>Velocity Damping (<a href="https://en.wikipedia.org/wiki/Drag_(physics)" target="_blank" rel="noopener noreferrer">Air Resistance</a>):</strong> Each frame, velocities are multiplied by 0.9995, modeling quadratic air drag proportional to velocity. This <a href="https://en.wikipedia.org/wiki/Exponential_decay" target="_blank" rel="noopener noreferrer">exponential decay</a> prevents perpetual motion and creates gradual energy dissipation. The damping coefficient is deliberately weak to allow sustained bouncing—the half-life of velocity is approximately 1,386 frames. A minimum velocity threshold of 0.1 px/frame prevents numerical underflow and ensures balls maintain some motion even at low energy states.</p>
                     
-                    <p><strong>Motion Trails:</strong> For visual effect, each ball maintains a 15-segment motion trail that fades from 0% to 60% opacity. These trails show recent movement but do not affect gameplay - they're purely cosmetic, unlike the elimination lines.</p>
+                    <p><strong>Circular Boundary <a href="https://en.wikipedia.org/wiki/Collision_detection" target="_blank" rel="noopener noreferrer">Collision Detection</a>:</strong> The arena is a circle centered at canvas center with radius 300px (or 40% of minimum dimension on small screens). Collision detection uses <a href="https://en.wikipedia.org/wiki/Euclidean_distance" target="_blank" rel="noopener noreferrer">Euclidean distance</a>: when the following condition is met (where $r$ is ball radius and $R$ is arena radius), a collision is registered:</p>
+                    <p>$$\sqrt{(x-x_0)^2 + (y-y_0)^2} + r > R$$</p>
+                    <p>The collision normal is computed as the normalized <a href="https://en.wikipedia.org/wiki/Unit_vector" target="_blank" rel="noopener noreferrer">unit vector</a> from arena center to ball center:</p>
+                    <p>$$\hat{n} = \frac{\text{ball} - \text{center}}{\|\text{ball} - \text{center}\|}$$</p>
                     
-                    <p><strong>Arena Sizes:</strong> Choose between Medium (700px diameter) or Full Screen mode (fills viewport with 5% padding). Ball size remains constant at 7px radius regardless of arena size.</p>
+                    <p><strong><a href="https://en.wikipedia.org/wiki/Elastic_collision" target="_blank" rel="noopener noreferrer">Elastic</a> Wall Reflection:</strong> Upon wall collision, velocity is reflected across the boundary normal, implementing <a href="https://en.wikipedia.org/wiki/Specular_reflection" target="_blank" rel="noopener noreferrer">specular reflection</a>:</p>
+                    <p>$$\mathbf{v}' = \mathbf{v} - 2(\mathbf{v} \cdot \hat{n})\hat{n}$$</p>
+                    <p>A <a href="https://en.wikipedia.org/wiki/Coefficient_of_restitution" target="_blank" rel="noopener noreferrer">restitution coefficient</a> of 0.99 is applied to model slight energy loss: $\mathbf{v}_{\text{final}} = 0.99 \times \mathbf{v}'$. This near-perfect elasticity keeps the simulation energetic while gradually reducing chaos. The ball is repositioned to prevent overlap: $\text{position} = \text{center} + (R - r) \times \hat{n}$.</p>
                     
-                    <p><strong>Speed Modes:</strong> Fast mode uses 2.5× base speed, Super Fast uses 5× base speed. Initial velocity directions are random.</p>
-                </div>
+                    <p><strong>Line Generation Algorithm:</strong> Each wall collision spawns a <a href="https://en.wikipedia.org/wiki/Line_segment" target="_blank" rel="noopener noreferrer">line segment</a> stored as {x1, y1, x2, y2, color}. The first endpoint $(x_1, y_1)$ is the wall impact point: $\text{impact} = \text{center} + R \times \hat{n}$. The second endpoint $(x_2, y_2)$ is the ball's center at collision. These lines are owned by the ball and transform with it—each frame, line endpoints update: $x_2^{\text{new}} = \text{ball}.x$, $y_2^{\text{new}} = \text{ball}.y$, maintaining the offset vector from wall to ball.</p>
+                    
+                    <p><strong>Ball-Ball Collision Physics:</strong> Inter-ball collisions use elastic collision equations in the collision frame. When two balls overlap ($\text{distance} < r_1 + r_2$), the collision axis is computed as the normalized separation vector:</p>
+                    <p>$$\hat{u} = \frac{\text{ball}_2 - \text{ball}_1}{\|\text{ball}_2 - \text{ball}_1\|}$$</p>
+                    <p>Velocities are decomposed into normal and tangential components. Normal components are exchanged: $v_{1n}' = v_{2n}$, $v_{2n}' = v_{1n}$, while tangential components remain unchanged. To prevent energy accumulation from numerical errors, post-collision speeds are averaged. Balls are separated to eliminate overlap.</p>
+                    
+                    <p><strong><a href="https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection" target="_blank" rel="noopener noreferrer">Line Intersection</a> Mathematics:</strong> Every frame, for each ball and each line, the simulation computes point-to-line-segment distance. For line segment AB and point P, it projects P onto the infinite line:</p>
+                    <p>$$t = \frac{(P-A) \cdot (B-A)}{\|B-A\|^2}$$</p>
+                    <p>If $0 \leq t \leq 1$, the closest point is on the segment: $C = A + t(B-A)$. The distance is $d = \|P-C\|$. If $d < \text{ball}_{\text{radius}}$, intersection is confirmed and the line is deleted. This $O(n \cdot m)$ algorithm ($n$ balls, $m$ lines) runs at 60 FPS thanks to <a href="https://en.wikipedia.org/wiki/Canvas_element" target="_blank" rel="noopener noreferrer">canvas 2D context</a> acceleration.</p>
+                    
+                    <p><strong>Elimination <a href="https://en.wikipedia.org/wiki/Finite-state_machine" target="_blank" rel="noopener noreferrer">State Machine</a>:</strong> Each ball tracks hasCreatedLines (boolean) and lines[] (array). Initially hasCreatedLines = false. On first wall collision, it becomes true. A ball is eligible for elimination when hasCreatedLines = true AND lines.length = 0. The simulation removes such balls via splice() from the active ball array. Single ball remaining triggers victory state. This creates a two-phase game: accumulation (balls create lines) and attrition (lines get destroyed).</p>
+                    
+                    <p><strong>Motion Trail Rendering:</strong> Each ball maintains a <a href="https://en.wikipedia.org/wiki/Circular_buffer" target="_blank" rel="noopener noreferrer">circular buffer</a> of 15 position history entries. Every frame, the current position is pushed and the oldest is popped. Trails render as polylines with gradient transparency, where $i$ is the segment index:</p>
+                    <p>$$\alpha(i) = 0.6 \times \frac{i}{15}$$</p>
+                    <p>This creates a fade effect using CanvasRenderingContext2D's <a href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalAlpha" target="_blank" rel="noopener noreferrer">globalAlpha</a> property. Trails are rendered before balls in the draw stack to ensure balls appear on top. These are purely decorative—they don't participate in collision or elimination logic.</p>
+                    
+                    <p><strong>Temporal Integration (<a href="https://en.wikipedia.org/wiki/Verlet_integration" target="_blank" rel="noopener noreferrer">Verlet-like</a>):</strong> Position updates use <a href="https://en.wikipedia.org/wiki/Semi-implicit_Euler_method" target="_blank" rel="noopener noreferrer">semi-implicit Euler integration</a>: $\mathbf{v} \mathrel{+}= \mathbf{a} \times dt$, $\mathbf{p} \mathrel{+}= \mathbf{v} \times dt$, with $dt = 1$ (normalized to frame time). This <a href="https://en.wikipedia.org/wiki/Symplectic_integrator" target="_blank" rel="noopener noreferrer">symplectic integrator</a> conserves energy better than explicit Euler and prevents the simulation from exploding. The order matters: updating velocity before position reduces numerical drift and maintains stability across varying frame rates.</p>
+                    
+                    <p><strong>Color Generation:</strong> Ball colors are generated using <a href="https://en.wikipedia.org/wiki/HSL_and_HSV" target="_blank" rel="noopener noreferrer">HSL color space</a> with evenly distributed hues:</p>
+                    <p>$$\text{hue} = \frac{i}{\text{numBalls}} \times 360°$$</p>
+                    <p>With saturation = 70% and lightness = 60%. This ensures high contrast between adjacent balls while avoiding oversaturated or too-dark colors. HSL is converted to RGB by the CSS engine. This systematic approach creates aesthetically pleasing, distinguishable palettes regardless of ball count.</p>
+                    
+                    <p><strong>Performance Optimizations:</strong> Canvas clears use clearRect() rather than full repaints. Collision detection employs early exits: if balls are far apart ($\text{distance} > 2 \times \text{max}_{\text{radius}}$), detailed collision math is skipped. The line crossing algorithm short-circuits when $t < 0$ or $t > 1$ (point not between line endpoints). <a href="https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame" target="_blank" rel="noopener noreferrer">requestAnimationFrame()</a> synchronizes with display refresh, typically 60 Hz, preventing wasted computations during non-visible frames.</p>
+                </section>
             </div>
         </div>
     </div>
 
-    <script src="../common/utils.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Initialize KaTeX auto-render -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError: false
+            });
+        });
+    </script>
 </body>
 </html>
