@@ -42,31 +42,35 @@
     <div class="container">
         <h1>⚽ Ball Physics Simulation</h1>
         
-        <div class="controls">
-            <div class="control-group">
-                <label for="numBalls">Number of Balls:</label>
-                <input type="number" id="numBalls" min="2" max="50" value="8">
+        <div class="game-layout">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="numBalls">Number of Balls:</label>
+                    <input type="number" id="numBalls" min="2" max="50" value="8">
+                </div>
+                
+                <div class="control-group">
+                    <label>Arena Size:</label>
+                    <div class="button-group">
+                        <button id="mediumArenaBtn" class="speed-btn active">⚪ Medium</button>
+                        <button id="fullScreenArenaBtn" class="speed-btn">📱 Full Screen</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Speed:</label>
+                    <div class="button-group">
+                        <button id="fastBtn" class="speed-btn active">🚀 Fast</button>
+                        <button id="superFastBtn" class="speed-btn">⚡ Super Fast</button>
+                    </div>
+                </div>
+                
+                <button id="startBtn" class="btn-primary">Start Simulation</button>
+                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none; width: 100%; margin-top: 10px;">Back to Games</a>
             </div>
             
-            <div class="control-group">
-                <label>Arena Size:</label>
-                <button id="mediumArenaBtn" class="speed-btn active">⚪ Medium</button>
-                <button id="fullScreenArenaBtn" class="speed-btn">📱 Full Screen</button>
-            </div>
-            
-            <div class="control-group">
-                <label>Speed:</label>
-                <button id="fastBtn" class="speed-btn active">🚀 Fast</button>
-                <button id="superFastBtn" class="speed-btn">⚡ Super Fast</button>
-            </div>
-            
-            <button id="startBtn" class="btn-primary">Start Simulation</button>
-            <div style="text-align: center; margin-top: 15px;">
-                <a href="../" class="btn-secondary" style="display: inline-block; text-decoration: none;">Back to Games</a>
-            </div>
+            <canvas id="canvas" width="700" height="700"></canvas>
         </div>
-        
-        <canvas id="canvas" width="600" height="600"></canvas>
         
         <!-- Full Screen Overlay Controls -->
         <div id="fullscreenControls" class="fullscreen-controls">

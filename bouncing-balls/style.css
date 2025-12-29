@@ -1,28 +1,98 @@
 /* Bouncing Balls Specific Styles */
 
+/* Parallax background effect */
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://storage.needpix.com/rsynced_images/night-sky-background-14391263141jp.jpg') center center no-repeat;
+    background-size: cover;
+    transform: translateZ(-1px) scale(1.5);
+    z-index: -1;
+    will-change: transform;
+}
+
+/* Parallax container */
+.container {
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 1px;
+    max-width: 100%;
+    width: 100%;
+    padding: 0 20px;
+}
+
+/* Light text colors for dark background */
+h1 {
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-size: 2em;
+    margin-bottom: 15px;
+}
+
+h2, h3 {
+    color: #ffffff;
+}
+
+/* Game Layout - Side by Side */
+.game-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    justify-content: center;
+    margin: 20px auto;
+    flex-wrap: wrap;
+    max-width: 1600px;
+}
+
 /* Controls Section */
 .controls {
-    margin-bottom: 20px;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 0 0 auto;
+    width: 380px;
+    order: 1;
+    padding: 20px;
+    border-radius: 10px;
 }
 
 .control-group {
-    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
 }
 
 label {
-    display: inline-block;
-    margin-right: 10px;
-    color: #555;
+    color: #ffffff;
     font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    font-size: 14px;
 }
 
 input[type="number"] {
-    padding: 8px 12px;
+    padding: 10px 12px;
     border: 2px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
-    width: 100px;
+    width: 100%;
     transition: border-color 0.3s ease;
 }
 
@@ -32,12 +102,12 @@ input[type="number"]:focus {
 }
 
 button {
-    padding: 10px 30px;
+    padding: 10px 20px;
     border: none;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
-    margin: 5px;
+    margin: 0;
     transition: all 0.3s ease;
     font-weight: 600;
 }
@@ -47,11 +117,12 @@ button:active {
 }
 
 .speed-btn {
-    padding: 8px 20px;
-    margin: 0 5px;
-    font-size: 14px;
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 13px;
     background: #f0f0f0;
     color: #333;
+    flex: 1;
 }
 
 .speed-btn:hover {
@@ -70,12 +141,12 @@ button:active {
 
 /* Canvas */
 #canvas {
-    border: 3px solid #667eea;
     border-radius: 10px;
-    background: #f8f9fa;
     display: block;
-    margin: 20px auto;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 0;
+    order: 2;
+    width: 800px;
+    height: 800px;
 }
 
 /* Full Screen Mode Styles */
@@ -160,47 +231,102 @@ body.fullscreen-active .fullscreen-controls {
     text-align: center;
     margin-top: 15px;
     font-size: 18px;
-    color: #333;
+    color: #ffffff;
     font-weight: 600;
     min-height: 30px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .winner {
-    color: #28a745;
+    color: #4cff4c;
     font-size: 22px;
     animation: pulse 1s infinite;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 /* Responsive design */
+@media (max-width: 1400px) {
+    #canvas {
+        width: 700px;
+        height: 700px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .game-layout {
+        gap: 20px;
+    }
+    
+    .controls {
+        width: 320px;
+    }
+    
+    #canvas {
+        width: 650px;
+        height: 650px;
+    }
+}
+
+@media (max-width: 1050px) {
+    .game-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .controls {
+        width: 100%;
+        max-width: 500px;
+    }
+    
+    #canvas {
+        width: 600px;
+        height: 600px;
+    }
+}
+
 @media (max-width: 768px) {
     #canvas {
+        width: 500px;
+        height: 500px;
+    }
+    
+    .controls {
         max-width: 100%;
-        height: auto;
     }
 
     input[type="number"] {
-        width: 80px;
+        width: 100%;
     }
 
     button {
-        padding: 8px 20px;
+        padding: 10px 15px;
         font-size: 14px;
     }
 
     .control-group {
-        margin: 10px 0;
+        margin: 0;
     }
+}
 
-    label {
-        display: block;
-        margin-bottom: 5px;
+@media (max-width: 600px) {
+    #canvas {
+        width: 90vw;
+        height: 90vw;
+        max-width: 450px;
+        max-height: 450px;
+    }
+    
+    .game-layout {
+        gap: 20px;
     }
 }
 
 @media (max-width: 480px) {
+    .button-group {
+        flex-direction: column;
+    }
+    
     .speed-btn {
-        display: block;
         width: 100%;
-        margin: 5px 0;
     }
 }
