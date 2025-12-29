@@ -8,13 +8,22 @@ let balls = [];
 let lines = [];
 let animationId = null;
 let isRunning = false;
-let bigBallRadius = 250;
+let bigBallRadius = 350;
 let smallBallRadius = 7;
 let speedMultiplier = 2.5; // Fast speed
 let centerX = canvas.width / 2;
 let centerY = canvas.height / 2;
 let isFullScreenMode = false;
 let hasSimulationRun = false; // Track if simulation has ever started
+
+// Physics constants
+const GRAVITY = 0.15; // Gravity acceleration (pixels per frame squared)
+const VELOCITY_DAMPING = 0.9995; // Damping factor to gradually slow balls (1.0 = no damping)
+const BOUNCE_ENERGY_LOSS = 0.99; // Energy retained after wall bounce (1.0 = no loss)
+const MIN_VELOCITY_BOOST = 1.5; // Minimum speed threshold - if ball is slower, give it a boost
+const RANDOM_BOOST_CHANCE = 0.25; // 25% chance of getting a velocity boost on wall bounce
+const RANDOM_BOOST_MIN = 1.15; // Minimum boost factor (15% increase)
+const RANDOM_BOOST_MAX = 1.35; // Maximum boost factor (35% increase)
 
 // Ball emoji collection with their representative colors
 const ballEmojis = [
@@ -123,6 +132,22 @@ class Ball {
             this.trail.shift();
         }
         
+        // Apply gravity to vertical velocity
+        this.vy += GRAVITY;
+        
+        // Apply velocity damping (air resistance)
+        this.vx *= VELOCITY_DAMPING;
+        this.vy *= VELOCITY_DAMPING;
+        
+        // Prevent balls from getting stuck - add minimum velocity boost
+        const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (currentSpeed < MIN_VELOCITY_BOOST && currentSpeed > 0.1) {
+            const boostFactor = MIN_VELOCITY_BOOST / currentSpeed;
+            this.vx *= boostFactor;
+            this.vy *= boostFactor;
+        }
+        
+        // Update position
         this.x += this.vx;
         this.y += this.vy;
 
@@ -144,13 +169,16 @@ class Ball {
             this.vx = this.vx - 2 * dotProduct * normalX;
             this.vy = this.vy - 2 * dotProduct * normalY;
 
-            // Increase speed on bounce
-            const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-            const speedIncreaseFactor = 1.03; // 3% speed increase per bounce
-            const newSpeed = currentSpeed * speedIncreaseFactor;
-            const speedRatio = newSpeed / currentSpeed;
-            this.vx *= speedRatio;
-            this.vy *= speedRatio;
+            // Apply energy loss on bounce (instead of increase)
+            this.vx *= BOUNCE_ENERGY_LOSS;
+            this.vy *= BOUNCE_ENERGY_LOSS;
+
+            // Random chance of velocity boost on wall bounce
+            if (Math.random() < RANDOM_BOOST_CHANCE) {
+                const boostFactor = RANDOM_BOOST_MIN + Math.random() * (RANDOM_BOOST_MAX - RANDOM_BOOST_MIN);
+                this.vx *= boostFactor;
+                this.vy *= boostFactor;
+            }
 
             // Create line on bounce
             this.createLine();
@@ -282,17 +310,18 @@ function checkBallCollision(ball1, ball2) {
         ball2.vx = vx2Final * cos - vy2 * sin;
         ball2.vy = vy2 * cos + vx2Final * sin;
 
-        // Scale both velocities to maximum speed
+        // Scale both velocities to average speed (instead of max) to reduce energy
+        const avgSpeed = (speed1 + speed2) / 2;
         const newSpeed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
         const newSpeed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
         
         if (newSpeed1 > 0) {
-            ball1.vx = (ball1.vx / newSpeed1) * maxSpeed;
-            ball1.vy = (ball1.vy / newSpeed1) * maxSpeed;
+            ball1.vx = (ball1.vx / newSpeed1) * avgSpeed;
+            ball1.vy = (ball1.vy / newSpeed1) * avgSpeed;
         }
         if (newSpeed2 > 0) {
-            ball2.vx = (ball2.vx / newSpeed2) * maxSpeed;
-            ball2.vy = (ball2.vy / newSpeed2) * maxSpeed;
+            ball2.vx = (ball2.vx / newSpeed2) * avgSpeed;
+            ball2.vy = (ball2.vy / newSpeed2) * avgSpeed;
         }
 
         // Separate balls
@@ -687,7 +716,7 @@ const fullScreenArenaBtn = document.getElementById('fullScreenArenaBtn');
 mediumArenaBtn.addEventListener('click', () => {
     if (!isRunning) {
         isFullScreenMode = false;
-        bigBallRadius = 250;
+        bigBallRadius = 350;
         mediumArenaBtn.classList.add('active');
         fullScreenArenaBtn.classList.remove('active');
         resizeCanvas(bigBallRadius);
@@ -726,7 +755,7 @@ function handleFullscreenChange() {
         // User exited fullscreen (e.g., pressed ESC) - reset to medium
         if (!isRunning) {
             isFullScreenMode = false;
-            bigBallRadius = 250;
+            bigBallRadius = 350;
             mediumArenaBtn.classList.add('active');
             fullScreenArenaBtn.classList.remove('active');
             resizeCanvas(bigBallRadius);

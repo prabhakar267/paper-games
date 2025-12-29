@@ -78,30 +78,47 @@
             <div class="collapsible-section">
                 <div class="section-header" onclick="toggleSection('rules')">
                     <h3>How It Works</h3>
-                    <span class="toggle-icon" id="rules-icon">▼</span>
+                    <span class="toggle-icon collapsed" id="rules-icon">▶</span>
                 </div>
-                <div class="section-content" id="rules-content">
+                <div class="section-content collapsed" id="rules-content">
                     <ul>
-                        <li>Balls bounce inside a circular arena with realistic physics</li>
-                        <li>When balls collide or hit walls, they leave colored trails</li>
-                        <li>If another ball crosses a trail, that trail disappears</li>
-                        <li>Balls without any trails left are eliminated</li>
-                        <li>The last ball with remaining trails wins!</li>
+                        <li><strong>Arena Physics:</strong> Balls bounce inside a circular arena with realistic gravity, air resistance, and energy loss on wall impacts</li>
+                        <li><strong>Line Creation:</strong> When a ball hits the arena wall, it creates a colored line from the wall contact point to the ball's center</li>
+                        <li><strong>Dynamic Lines:</strong> These lines stay attached to their ball and move with it as the ball continues bouncing</li>
+                        <li><strong>Line Crossing:</strong> When any ball's path crosses another ball's line, that line is instantly destroyed</li>
+                        <li><strong>Elimination:</strong> A ball is eliminated when all of its lines have been crossed and destroyed (it must have created at least one line first)</li>
+                        <li><strong>Victory:</strong> The last ball with remaining lines wins! Strategy involves protecting your lines while destroying others'</li>
+                        <li><strong>Visual Trails:</strong> Balls leave fading motion trails behind them to show their path (these are separate from the elimination lines)</li>
                     </ul>
                 </div>
             </div>
             
             <div class="collapsible-section">
                 <div class="section-header" onclick="toggleSection('physics')">
-                    <h3>Physics Details</h3>
-                    <span class="toggle-icon" id="physics-icon">▼</span>
+                    <h3>Physics & Mechanics Details</h3>
+                    <span class="toggle-icon collapsed" id="physics-icon">▶</span>
                 </div>
-                <div class="section-content" id="physics-content">
-                    <p><strong>Collision Detection:</strong> The simulation uses elastic collision physics where momentum is conserved during ball-to-ball collisions. Each collision creates a visible trail.</p>
+                <div class="section-content collapsed" id="physics-content">
+                    <p><strong>Gravity & Damping:</strong> Balls experience constant downward gravity (0.15 px/frame²) and air resistance (0.9995 damping factor), creating natural-looking motion. A minimum velocity boost prevents balls from getting stuck.</p>
                     
-                    <p><strong>Trail System:</strong> Trails are line segments that connect a ball's position at collision points. These trails remain attached to the ball and move with it. When any ball's trajectory crosses another ball's trail, that trail is destroyed.</p>
+                    <p><strong>Wall Collisions:</strong> When a ball hits the circular arena wall, it reflects with 99% energy retention. Each wall bounce creates a colored line segment from the wall contact point to the ball's center. These lines are permanently attached to the ball and move with it.</p>
                     
-                    <p><strong>Elimination:</strong> A ball is eliminated once all of its trails have been crossed by other balls. This creates an interesting dynamic where balls must protect their trails while trying to cross others'.</p>
+                    <p><strong>Ball-to-Ball Collisions:</strong> When two balls collide, they exchange velocities along the collision axis (elastic collision). Their speeds are averaged to prevent energy accumulation. Importantly, ball collisions do NOT create lines - only wall hits do.</p>
+                    
+                    <p><strong>Line Destruction System:</strong> Every frame, the simulation checks if any ball's current position crosses any line segment using circle-line distance calculations. When a crossing is detected, that line is immediately removed. A ball can cross its own lines if it currently has no lines remaining.</p>
+                    
+                    <p><strong>Elimination Rules:</strong> A ball is removed from the game when:</p>
+                    <ul>
+                        <li>It has created at least one line (has bounced off a wall)</li>
+                        <li>All of its lines have been crossed and destroyed</li>
+                        <li>There are still multiple balls remaining in the arena</li>
+                    </ul>
+                    
+                    <p><strong>Motion Trails:</strong> For visual effect, each ball maintains a 15-segment motion trail that fades from 0% to 60% opacity. These trails show recent movement but do not affect gameplay - they're purely cosmetic, unlike the elimination lines.</p>
+                    
+                    <p><strong>Arena Sizes:</strong> Choose between Medium (700px diameter) or Full Screen mode (fills viewport with 5% padding). Ball size remains constant at 7px radius regardless of arena size.</p>
+                    
+                    <p><strong>Speed Modes:</strong> Fast mode uses 2.5× base speed, Super Fast uses 5× base speed. Initial velocity directions are random.</p>
                 </div>
             </div>
         </div>
