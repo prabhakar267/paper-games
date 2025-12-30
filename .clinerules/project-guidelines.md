@@ -248,15 +248,30 @@ document.addEventListener('DOMContentLoaded', () => {
 Add your project to the main `index.html`:
 
 ```html
-<div class="game-card">
-    <img src="[project-name]/assets/banner_image_generated.png" alt="[Game Name]">
-    <div class="game-info">
-        <h2>[Game Name]</h2>
-        <p>[Brief description - 2 sentences max]</p>
-        <a href="[project-name]/" class="play-button">Play Now →</a>
-    </div>
+<div class="game-tile" style="background-image: url('[project-name]/assets/banner_image_generated.png');">
+    <a href="[project-name]/">
+        <div class="tile-overlay">
+            <h3>[Game Name]</h3>
+            <p>[One-line description from your game]</p>
+        </div>
+    </a>
 </div>
 ```
+
+### Step 7: Update README.md
+
+Add your project to the main `README.md` file in the games table:
+
+```markdown
+| [<img src="[project-name]/assets/banner_image_generated.png" width="400" alt="[Game Name]">](https://prabhakar267.github.io/paper-games/[project-name]/) | **[[Game Name]](https://prabhakar267.github.io/paper-games/[project-name]/)**<br>[One-line description from your game] |
+```
+
+**Important:**
+- Add the new game entry as a new row in the table
+- Use the same one-line description as used in the landing page
+- Images are fixed at 400px width using HTML img tags
+- The banner image should be clickable and link to the live game URL
+- The game name should also be a clickable link
 
 ## Common Resources - DO NOT DUPLICATE
 
@@ -375,6 +390,7 @@ Before committing a new project:
 - [ ] Game is playable end-to-end
 - [ ] Browser console has no errors
 - [ ] Landing page updated with new game card
+- [ ] README.md updated with new game entry
 
 ## Common Pitfalls to Avoid
 
