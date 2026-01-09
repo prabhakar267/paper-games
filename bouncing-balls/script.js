@@ -113,8 +113,10 @@ function randomBallEmoji() {
 // Resize canvas to fill available space
 // Called on initialization and window resize
 function resizeCanvas() {
+    const nav = document.querySelector('.top-nav');
+    const navHeight = nav ? nav.offsetHeight : 70;
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - 70; // Reserve space for navigation bar
+    canvas.height = window.innerHeight - navHeight;
 }
 
 // Ball class - Represents a single ball with physics, trail, and line management
