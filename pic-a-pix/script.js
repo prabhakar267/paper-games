@@ -7,8 +7,14 @@ class PicAPixGame {
         this.rowClues = [];
         this.colClues = [];
         this.gameStarted = false;
-        
+
+        this.isDragging = false;
+        this.dragAction = null; // 'fill', 'empty', or 'mark'
+        this.dragButton = null; // 0 = left, 2 = right
+
         this.initializeEventListeners();
+        document.addEventListener('mouseup', () => this.handleMouseUp());
+        document.addEventListener('touchend', () => this.handleMouseUp());
     }
 
     initializeEventListeners() {
@@ -206,8 +212,13 @@ class PicAPixGame {
                 cell.dataset.row = row;
                 cell.dataset.col = col;
 
-                cell.addEventListener('click', (e) => this.handleCellClick(e, row, col));
-                cell.addEventListener('contextmenu', (e) => this.handleCellRightClick(e, row, col));
+                cell.addEventListener('mousedown', (e) => this.handleMouseDown(e, row, col));
+                cell.addEventListener('mouseenter', (e) => this.handleMouseEnter(e, row, col));
+                cell.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                // Touch support for mobile drag
+                cell.addEventListener('touchstart', (e) => this.handleTouchStart(e, row, col), { passive: false });
+                cell.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
 
                 this.updateCellDisplay(cell, row, col);
                 gameBoard.appendChild(cell);
@@ -215,39 +226,79 @@ class PicAPixGame {
         }
     }
 
-    handleCellClick(e, row, col) {
+    handleMouseDown(e, row, col) {
         e.preventDefault();
         if (!this.gameStarted) return;
 
+        this.isDragging = true;
+        this.dragButton = e.button;
+
         const currentState = this.playerGrid[row][col];
-        
-        if (currentState === 'empty') {
-            this.playerGrid[row][col] = 'filled';
-        } else if (currentState === 'filled') {
-            this.playerGrid[row][col] = 'empty';
-        } else if (currentState === 'marked') {
-            this.playerGrid[row][col] = 'filled';
+
+        if (e.button === 0) {
+            // Left click: toggle between filled and empty
+            this.dragAction = (currentState === 'filled') ? 'empty' : 'fill';
+        } else if (e.button === 2) {
+            // Right click: toggle between marked and empty
+            this.dragAction = (currentState === 'marked') ? 'empty' : 'mark';
         }
 
-        this.updateCellDisplay(e.target, row, col);
-        this.checkCompletion();
+        this.applyAction(row, col);
     }
 
-    handleCellRightClick(e, row, col) {
+    handleMouseEnter(e, row, col) {
+        if (!this.isDragging || !this.gameStarted) return;
+        this.applyAction(row, col);
+    }
+
+    handleMouseUp() {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.dragAction = null;
+            this.dragButton = null;
+            this.checkCompletion();
+        }
+    }
+
+    handleTouchStart(e, row, col) {
         e.preventDefault();
         if (!this.gameStarted) return;
 
+        this.isDragging = true;
+        this.dragButton = 0;
+
         const currentState = this.playerGrid[row][col];
-        
-        if (currentState === 'empty') {
-            this.playerGrid[row][col] = 'marked';
-        } else if (currentState === 'marked') {
+        this.dragAction = (currentState === 'filled') ? 'empty' : 'fill';
+
+        this.applyAction(row, col);
+    }
+
+    handleTouchMove(e) {
+        e.preventDefault();
+        if (!this.isDragging || !this.gameStarted) return;
+
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.dataset.row !== undefined && element.dataset.col !== undefined) {
+            const row = parseInt(element.dataset.row);
+            const col = parseInt(element.dataset.col);
+            this.applyAction(row, col);
+        }
+    }
+
+    applyAction(row, col) {
+        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (!cell) return;
+
+        if (this.dragAction === 'fill') {
+            this.playerGrid[row][col] = 'filled';
+        } else if (this.dragAction === 'empty') {
             this.playerGrid[row][col] = 'empty';
-        } else if (currentState === 'filled') {
+        } else if (this.dragAction === 'mark') {
             this.playerGrid[row][col] = 'marked';
         }
 
-        this.updateCellDisplay(e.target, row, col);
+        this.updateCellDisplay(cell, row, col);
     }
 
     updateCellDisplay(cell, row, col) {

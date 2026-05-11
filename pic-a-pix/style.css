@@ -51,6 +51,7 @@
     background: #333;
     border-radius: 5px;
     padding: 5px;
+    user-select: none;
 }
 
 .clue-cell {
