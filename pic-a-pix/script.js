@@ -212,6 +212,11 @@ class PicAPixGame {
                 cell.dataset.row = row;
                 cell.dataset.col = col;
 
+                if (this.gridSize === 15) {
+                    if (col % 5 === 0 && col !== 0) cell.classList.add('block-left');
+                    if (row % 5 === 0 && row !== 0) cell.classList.add('block-top');
+                }
+
                 cell.addEventListener('mousedown', (e) => this.handleMouseDown(e, row, col));
                 cell.addEventListener('mouseenter', (e) => this.handleMouseEnter(e, row, col));
                 cell.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -303,8 +308,8 @@ class PicAPixGame {
 
     updateCellDisplay(cell, row, col) {
         const state = this.playerGrid[row][col];
-        
-        cell.className = 'cell';
+
+        cell.classList.remove('filled', 'marked');
         cell.textContent = '';
 
         if (state === 'filled') {
