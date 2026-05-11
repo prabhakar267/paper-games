@@ -304,12 +304,99 @@ class PicAPixGame {
         }
 
         this.updateCellDisplay(cell, row, col);
+        this.checkLineCompletion(row, col);
+    }
+
+    checkLineCompletion(row, col) {
+        this.checkRowCompletion(row);
+        this.checkColCompletion(col);
+    }
+
+    getPlayerLineClues(line) {
+        const clues = [];
+        let currentGroup = 0;
+
+        for (let i = 0; i < line.length; i++) {
+            if (line[i] === 'filled') {
+                currentGroup++;
+            } else {
+                if (currentGroup > 0) {
+                    clues.push(currentGroup);
+                    currentGroup = 0;
+                }
+            }
+        }
+
+        if (currentGroup > 0) {
+            clues.push(currentGroup);
+        }
+
+        return clues.length > 0 ? clues : [0];
+    }
+
+    checkRowCompletion(row) {
+        const line = this.playerGrid[row];
+        const playerClues = this.getPlayerLineClues(line);
+        const expectedClues = this.rowClues[row];
+        const isComplete = playerClues.length === expectedClues.length &&
+            playerClues.every((v, i) => v === expectedClues[i]);
+
+        const clueCell = document.querySelectorAll('.row-clue')[row];
+
+        if (isComplete) {
+            for (let col = 0; col < this.gridSize; col++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (this.playerGrid[row][col] === 'empty') {
+                    this.playerGrid[row][col] = 'marked';
+                    this.updateCellDisplay(cell, row, col);
+                }
+                cell.classList.add('line-complete');
+            }
+            clueCell.classList.add('clue-complete');
+        } else {
+            for (let col = 0; col < this.gridSize; col++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.remove('line-complete');
+            }
+            clueCell.classList.remove('clue-complete');
+        }
+    }
+
+    checkColCompletion(col) {
+        const line = [];
+        for (let row = 0; row < this.gridSize; row++) {
+            line.push(this.playerGrid[row][col]);
+        }
+        const playerClues = this.getPlayerLineClues(line);
+        const expectedClues = this.colClues[col];
+        const isComplete = playerClues.length === expectedClues.length &&
+            playerClues.every((v, i) => v === expectedClues[i]);
+
+        const clueCell = document.querySelectorAll('.col-clue')[col];
+
+        if (isComplete) {
+            for (let row = 0; row < this.gridSize; row++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (this.playerGrid[row][col] === 'empty') {
+                    this.playerGrid[row][col] = 'marked';
+                    this.updateCellDisplay(cell, row, col);
+                }
+                cell.classList.add('line-complete');
+            }
+            clueCell.classList.add('clue-complete');
+        } else {
+            for (let row = 0; row < this.gridSize; row++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.remove('line-complete');
+            }
+            clueCell.classList.remove('clue-complete');
+        }
     }
 
     updateCellDisplay(cell, row, col) {
         const state = this.playerGrid[row][col];
 
-        cell.classList.remove('filled', 'marked');
+        cell.classList.remove('filled', 'marked', 'line-complete');
         cell.textContent = '';
 
         if (state === 'filled') {
